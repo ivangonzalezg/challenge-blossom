@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import type { RootStackParamList } from '@/app/navigation/root-navigator';
 import { useCharacter, useIsFavorite } from '@/entities/character';
-import { AvatarImage, colors } from '@/shared/ui';
+import { AvatarImage, colors, ErrorMessage } from '@/shared/ui';
 
 type CharacterDetailScreenProps = NativeStackScreenProps<
   RootStackParamList,
@@ -50,11 +50,7 @@ function CharacterDetailScreen({
           <ActivityIndicator />
         </View>
       ) : errorMessage || !character ? (
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-center text-gray-500 dark:text-neutral-400">
-            {errorMessage ?? 'Character not found'}
-          </Text>
-        </View>
+        <ErrorMessage>{errorMessage ?? 'Character not found'}</ErrorMessage>
       ) : (
         <View>
           <View className="self-start relative">

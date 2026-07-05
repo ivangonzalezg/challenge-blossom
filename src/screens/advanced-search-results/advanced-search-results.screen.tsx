@@ -1,7 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ArrowLeft } from 'lucide-react-native';
 import {
-  ActivityIndicator,
   SectionList,
   Text,
   TouchableOpacity,
@@ -15,7 +14,13 @@ import {
   useFavoriteCharacters,
   type Character,
 } from '@/entities/character';
-import { colors } from '@/shared/ui';
+import {
+  colors,
+  ErrorMessage,
+  SectionFooterMessage,
+  SectionFooterSpinner,
+  SectionHeader,
+} from '@/shared/ui';
 
 type AdvancedSearchResultsScreenProps = NativeStackScreenProps<
   RootStackParamList,
@@ -29,22 +34,6 @@ const SPECIE_API_VALUES: Record<'human' | 'alien', string> = {
   human: 'Human',
   alien: 'Alien',
 };
-
-function SectionFooterMessage({ children }: { children: string }) {
-  return (
-    <Text className="pb-4 text-center text-gray-500 dark:text-neutral-400">
-      {children}
-    </Text>
-  );
-}
-
-function SectionFooterSpinner() {
-  return (
-    <View className="py-4">
-      <ActivityIndicator />
-    </View>
-  );
-}
 
 function AdvancedSearchResultsScreen({
   route,
@@ -163,11 +152,7 @@ function AdvancedSearchResultsScreen({
       </View>
 
       {errorMessage ? (
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-center text-gray-500 dark:text-neutral-400">
-            {errorMessage}
-          </Text>
-        </View>
+        <ErrorMessage>{errorMessage}</ErrorMessage>
       ) : (
         <SectionList
           sections={sections}
@@ -189,13 +174,14 @@ function AdvancedSearchResultsScreen({
           }
           onEndReachedThreshold={0.5}
           renderSectionHeader={({ section }) => (
-            <Text className="bg-white py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-neutral-950 dark:text-neutral-400">
-              {section.title} (
-              {section.title === STARRED_SECTION_TITLE
-                ? starredCharacters.length
-                : charactersSectionCount}
-              )
-            </Text>
+            <SectionHeader
+              title={section.title}
+              count={
+                section.title === STARRED_SECTION_TITLE
+                  ? starredCharacters.length
+                  : charactersSectionCount
+              }
+            />
           )}
           renderSectionFooter={({ section }) =>
             section.title === STARRED_SECTION_TITLE
