@@ -10,4 +10,6 @@ export const colors = {
   violet400: '#A78BFA',
   neutral400: '#A3A3A3',
   neutral600: '#525252',
+  neutral800: '#262626',
+  green500: '#63D838',
 } as const;

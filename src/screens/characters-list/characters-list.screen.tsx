@@ -1,3 +1,4 @@
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Search, SlidersVertical } from 'lucide-react-native';
 import {
   ActivityIndicator,
@@ -7,10 +8,16 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+import type { RootStackParamList } from '@/app/navigation/root-navigator';
 import { CharacterListItem, useCharactersList } from '@/entities/character';
 import { colors } from '@/shared/ui';
 
-function CharactersListScreen() {
+type CharactersListScreenProps = NativeStackScreenProps<
+  RootStackParamList,
+  'CharactersList'
+>;
+
+function CharactersListScreen({ navigation }: CharactersListScreenProps) {
   const isDarkMode = useColorScheme() === 'dark';
   const {
     characters,
@@ -23,13 +30,13 @@ function CharactersListScreen() {
   } = useCharactersList();
 
   return (
-    <View className="flex-1 bg-white dark:bg-neutral-950">
-      <View className="px-6 pt-7">
+    <View className="flex-1 bg-white dark:bg-neutral-950 px-6">
+      <View className="pt-7">
         <Text className="text-2xl font-bold text-gray-800 dark:text-neutral-50">
           Rick and Morty list
         </Text>
       </View>
-      <View className="px-6 py-4">
+      <View className="py-4">
         <View className="flex-row items-center gap-2 rounded-lg bg-gray-100 py-2 pl-3 pr-2 dark:bg-neutral-900">
           <Search
             color={isDarkMode ? colors.neutral400 : colors.gray400}
@@ -55,7 +62,7 @@ function CharactersListScreen() {
           <ActivityIndicator />
         </View>
       ) : errorMessage ? (
-        <View className="flex-1 items-center justify-center px-6">
+        <View className="flex-1 items-center justify-center">
           <Text className="text-center text-gray-500 dark:text-neutral-400">
             {errorMessage}
           </Text>
@@ -64,8 +71,16 @@ function CharactersListScreen() {
         <SectionList
           sections={[{ title: 'Characters', data: characters }]}
           keyExtractor={character => character.id}
-          renderItem={({ item }) => <CharacterListItem character={item} />}
-          contentContainerClassName="px-6"
+          renderItem={({ item }) => (
+            <CharacterListItem
+              character={item}
+              onPress={() =>
+                navigation.navigate('CharacterDetail', {
+                  characterId: item.id,
+                })
+              }
+            />
+          )}
           onEndReached={loadNextPage}
           onEndReachedThreshold={0.5}
           renderSectionHeader={({ section }) => (

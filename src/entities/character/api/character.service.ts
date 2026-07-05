@@ -1,6 +1,11 @@
 import { graphqlClient } from '@/shared/api';
-import { GET_CHARACTERS } from '@/entities/character/api/character.queries';
+import {
+  GET_CHARACTER,
+  GET_CHARACTERS,
+} from '@/entities/character/api/character.queries';
 import type {
+  GetCharacterResponse,
+  GetCharacterVariables,
   GetCharactersResponse,
   GetCharactersVariables,
 } from '@/entities/character/model/character.types';
@@ -65,4 +70,15 @@ export async function fetchCharacters(page = 1) {
   );
 
   return data.characters;
+}
+
+export async function fetchCharacter(id: string) {
+  const { data } = await withRetryOn429(() =>
+    graphqlClient.query<GetCharacterResponse, GetCharacterVariables>({
+      query: GET_CHARACTER,
+      variables: { id },
+    }),
+  );
+
+  return data.character;
 }

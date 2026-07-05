@@ -24,3 +24,11 @@ export type GetCharactersResponse = {
 export type GetCharactersVariables = {
   page?: number;
 };
+
+export type GetCharacterResponse = {
+  character: Character;
+};
+
+export type GetCharacterVariables = {
+  id: string;
+};

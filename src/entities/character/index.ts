@@ -1,8 +1,11 @@
-export { fetchCharacters } from './api/character.service';
+export { fetchCharacter, fetchCharacters } from './api/character.service';
+export { useCharacter } from './lib/use-character';
 export { useCharactersList } from './lib/use-characters-list';
 export type {
   Character,
   CharactersPageInfo,
+  GetCharacterResponse,
+  GetCharacterVariables,
   GetCharactersResponse,
   GetCharactersVariables,
 } from './model/character.types';
