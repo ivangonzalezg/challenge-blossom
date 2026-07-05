@@ -11,9 +11,11 @@ import {
 import type { RootStackParamList } from '@/app/navigation/root-navigator';
 import {
   CharacterListItem,
+  passesVisibilityFilter,
   sortCharactersByName,
   useCharactersList,
   useFavoriteCharacters,
+  useHiddenCharacters,
   type Character,
   type NameSortOrder,
 } from '@/entities/character';
@@ -58,8 +60,13 @@ function AdvancedSearchResultsScreen({
   route,
   navigation,
 }: AdvancedSearchResultsScreenProps) {
-  const { charactersFilter, specieFilter, statusFilter, genderFilter } =
-    route.params;
+  const {
+    charactersFilter,
+    specieFilter,
+    statusFilter,
+    genderFilter,
+    visibilityFilter,
+  } = route.params;
   const isDarkMode = useColorScheme() === 'dark';
   const [starredSortOrder, setStarredSortOrder] =
     useState<NameSortOrder>('asc');
@@ -68,7 +75,8 @@ function AdvancedSearchResultsScreen({
     (charactersFilter !== '' && charactersFilter !== 'all' ? 1 : 0) +
     (specieFilter !== '' && specieFilter !== 'all' ? 1 : 0) +
     (statusFilter !== '' && statusFilter !== 'all' ? 1 : 0) +
-    (genderFilter !== '' && genderFilter !== 'all' ? 1 : 0);
+    (genderFilter !== '' && genderFilter !== 'all' ? 1 : 0) +
+    (visibilityFilter !== '' && visibilityFilter !== 'all' ? 1 : 0);
 
   const speciesQueryValue =
     specieFilter === 'human' || specieFilter === 'alien'
@@ -106,9 +114,12 @@ function AdvancedSearchResultsScreen({
   );
   const { favoriteCharacters, favoriteIds, toggleFavorite } =
     useFavoriteCharacters();
+  const { hiddenIds } = useHiddenCharacters();
 
   const nonFavoriteCharacters = characters.filter(
-    character => !favoriteIds.has(character.id),
+    character =>
+      !favoriteIds.has(character.id) &&
+      passesVisibilityFilter(character.id, hiddenIds, visibilityFilter),
   );
   const starredCharacters = sortCharactersByName(
     favoriteCharacters.filter(character => {
@@ -119,6 +130,9 @@ function AdvancedSearchResultsScreen({
         return false;
       }
       if (genderQueryValue && character.gender !== genderQueryValue) {
+        return false;
+      }
+      if (!passesVisibilityFilter(character.id, hiddenIds, visibilityFilter)) {
         return false;
       }
       return true;

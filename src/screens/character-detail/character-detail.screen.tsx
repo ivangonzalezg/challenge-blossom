@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ArrowLeft, Heart, Send } from 'lucide-react-native';
+import { ArrowLeft, Eye, EyeOff, Heart, Send } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,7 +15,9 @@ import {
   CommentListItem,
   useCharacter,
   useComments,
+  useHiddenCharacters,
   useIsFavorite,
+  useIsHidden,
 } from '@/entities/character';
 import { AvatarImage, colors, ErrorMessage, SectionHeader } from '@/shared/ui';
 
@@ -35,6 +37,8 @@ function CharacterDetailScreen({
     route.params.characterId,
   );
   const isFavorite = useIsFavorite(route.params.characterId);
+  const isHidden = useIsHidden(route.params.characterId);
+  const { toggleHidden } = useHiddenCharacters();
   const {
     comments,
     errorMessage: commentsErrorMessage,
@@ -64,20 +68,43 @@ function CharacterDetailScreen({
     );
   }, []);
 
+  const handleToggleHidden = useCallback(() => {
+    toggleHidden(route.params.characterId);
+  }, [toggleHidden, route.params.characterId]);
+
   return (
     <View className="flex-1 bg-white dark:bg-neutral-950">
       <ScrollView className="flex-1" contentContainerClassName="px-6">
-        <View className="flex justify-center relative h-16">
+        <View className="flex-row items-center justify-between relative h-16">
           <TouchableOpacity
             onPress={navigation.goBack}
             activeOpacity={0.6}
-            className="absolute p-3 -left-3"
+            className="p-3 -left-3"
           >
             <ArrowLeft
               color={isDarkMode ? colors.neutral400 : colors.gray900}
               size={24}
             />
           </TouchableOpacity>
+          {character && (
+            <TouchableOpacity
+              onPress={handleToggleHidden}
+              activeOpacity={0.6}
+              className="p-3"
+            >
+              {isHidden ? (
+                <EyeOff
+                  color={isDarkMode ? colors.neutral400 : colors.gray900}
+                  size={25}
+                />
+              ) : (
+                <Eye
+                  color={isDarkMode ? colors.neutral400 : colors.gray900}
+                  size={25}
+                />
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         {isLoading ? (

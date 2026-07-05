@@ -10,20 +10,21 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import type {
-  CharactersFilter,
-  GenderFilter,
-  RootStackParamList,
-  SpecieFilter,
-  StatusFilter,
-} from '@/app/navigation/root-navigator';
+import type { RootStackParamList } from '@/app/navigation/root-navigator';
 import {
   CharacterListItem,
+  passesVisibilityFilter,
   sortCharactersByName,
   useCharactersList,
   useFavoriteCharacters,
+  useHiddenCharacters,
   type Character,
+  type CharactersFilter,
+  type GenderFilter,
   type NameSortOrder,
+  type SpecieFilter,
+  type StatusFilter,
+  type VisibilityFilter,
 } from '@/entities/character';
 import {
   BottomSheetModal,
@@ -63,6 +64,9 @@ function CharactersListScreen({
   const [specieFilter, setSpecieFilter] = useState<SpecieFilter | ''>('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter | ''>('');
   const [genderFilter, setGenderFilter] = useState<GenderFilter | ''>('');
+  const [visibilityFilter, setVisibilityFilter] = useState<
+    VisibilityFilter | ''
+  >('');
 
   const filtersSheetRef = useRef<BottomSheetModalRef>(null);
 
@@ -79,6 +83,7 @@ function CharactersListScreen({
       setSpecieFilter('');
       setStatusFilter('');
       setGenderFilter('');
+      setVisibilityFilter('');
       navigation.setParams({ clearFilters: undefined });
     }
   }, [route.params?.clearFilters, navigation]);
@@ -90,8 +95,16 @@ function CharactersListScreen({
       specieFilter,
       statusFilter,
       genderFilter,
+      visibilityFilter,
     });
-  }, [navigation, charactersFilter, specieFilter, statusFilter, genderFilter]);
+  }, [
+    navigation,
+    charactersFilter,
+    specieFilter,
+    statusFilter,
+    genderFilter,
+    visibilityFilter,
+  ]);
 
   const handlePresentFilters = useCallback(() => {
     filtersSheetRef.current?.present();
@@ -120,16 +133,20 @@ function CharactersListScreen({
   } = useCharactersList(debouncedSearchText || undefined);
   const { favoriteCharacters, favoriteIds, toggleFavorite } =
     useFavoriteCharacters();
+  const { hiddenIds } = useHiddenCharacters();
 
   const nonFavoriteCharacters = characters.filter(
-    character => !favoriteIds.has(character.id),
+    character =>
+      !favoriteIds.has(character.id) &&
+      passesVisibilityFilter(character.id, hiddenIds, ''),
   );
   const starredCharacters = sortCharactersByName(
-    isSearching
+    (isSearching
       ? favoriteCharacters.filter(character =>
           character.name.toLowerCase().includes(searchText.toLowerCase()),
         )
-      : favoriteCharacters,
+      : favoriteCharacters
+    ).filter(character => passesVisibilityFilter(character.id, hiddenIds, '')),
     starredSortOrder,
   );
 
@@ -288,6 +305,8 @@ function CharactersListScreen({
           onChangeStatusFilter={setStatusFilter}
           genderFilter={genderFilter}
           onChangeGenderFilter={setGenderFilter}
+          visibilityFilter={visibilityFilter}
+          onChangeVisibilityFilter={setVisibilityFilter}
           onApply={handleApplyFilters}
           onClose={handleCloseFilters}
         />

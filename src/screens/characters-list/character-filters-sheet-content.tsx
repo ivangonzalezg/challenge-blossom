@@ -4,7 +4,8 @@ import type {
   GenderFilter,
   SpecieFilter,
   StatusFilter,
-} from '@/app/navigation/root-navigator';
+  VisibilityFilter,
+} from '@/entities/character';
 import { colors } from '@/shared/ui';
 import { ArrowLeft } from 'lucide-react-native';
 
@@ -13,6 +14,13 @@ const CHARACTERS_FILTER_OPTIONS: { label: string; value: CharactersFilter }[] =
     { label: 'All', value: 'all' },
     { label: 'Starred', value: 'starred' },
     { label: 'Others', value: 'others' },
+  ];
+
+const VISIBILITY_FILTER_OPTIONS: { label: string; value: VisibilityFilter }[] =
+  [
+    { label: 'All', value: 'all' },
+    { label: 'Visible', value: 'visible' },
+    { label: 'Hidden', value: 'hidden' },
   ];
 
 const SPECIE_FILTER_OPTIONS: { label: string; value: SpecieFilter }[] = [
@@ -120,6 +128,8 @@ type CharacterFiltersSheetContentProps = {
   onChangeStatusFilter: (value: StatusFilter) => void;
   genderFilter: GenderFilter | '';
   onChangeGenderFilter: (value: GenderFilter) => void;
+  visibilityFilter: VisibilityFilter | '';
+  onChangeVisibilityFilter: (value: VisibilityFilter) => void;
   onApply: () => void;
   onClose: () => void;
 };
@@ -133,6 +143,8 @@ function CharacterFiltersSheetContent({
   onChangeStatusFilter,
   genderFilter,
   onChangeGenderFilter,
+  visibilityFilter,
+  onChangeVisibilityFilter,
   onApply,
   onClose,
 }: CharacterFiltersSheetContentProps) {
@@ -142,7 +154,8 @@ function CharacterFiltersSheetContent({
     charactersFilter !== '' ||
     specieFilter !== '' ||
     statusFilter !== '' ||
-    genderFilter !== '';
+    genderFilter !== '' ||
+    visibilityFilter !== '';
 
   return (
     <View className="flex-1 bg-white px-6 dark:bg-neutral-950">
@@ -190,6 +203,13 @@ function CharacterFiltersSheetContent({
         selectedValue={genderFilter}
         onSelect={onChangeGenderFilter}
         wrap
+      />
+
+      <FilterSection
+        title="Visibility"
+        options={VISIBILITY_FILTER_OPTIONS}
+        selectedValue={visibilityFilter}
+        onSelect={onChangeVisibilityFilter}
       />
 
       <View className="pt-6 pb-4">

@@ -7,17 +7,28 @@ export {
   useIsFavorite,
 } from './lib/favorites-context';
 export {
+  HiddenCharactersProvider,
+  useHiddenCharacters,
+  useIsHidden,
+} from './lib/hidden-context';
+export {
   sortCharactersByName,
   type NameSortOrder,
 } from './lib/sort-characters-by-name';
+export { passesVisibilityFilter } from './lib/visibility-filter';
 export { useComments } from './lib/use-comments';
 export type {
   Character,
+  CharactersFilter,
   CharactersPageInfo,
+  GenderFilter,
   GetCharacterResponse,
   GetCharacterVariables,
   GetCharactersResponse,
   GetCharactersVariables,
+  SpecieFilter,
+  StatusFilter,
+  VisibilityFilter,
 } from './model/character.types';
 export type { Comment } from './model/comment.types';
 export { default as CharacterListItem } from './ui/character-list-item';

@@ -46,3 +46,9 @@ export type GetCharactersByIdsResponse = {
 export type GetCharactersByIdsVariables = {
   ids: string[];
 };
+
+export type CharactersFilter = 'all' | 'starred' | 'others';
+export type SpecieFilter = 'all' | 'human' | 'alien';
+export type StatusFilter = 'all' | 'alive' | 'dead' | 'unknown';
+export type GenderFilter = 'all' | 'female' | 'male' | 'genderless' | 'unknown';
+export type VisibilityFilter = 'all' | 'visible' | 'hidden';

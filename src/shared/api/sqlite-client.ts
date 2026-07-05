@@ -20,3 +20,9 @@ sqliteClient.execute(`
 sqliteClient.execute(`
   CREATE INDEX IF NOT EXISTS idx_comments_character_id ON comments(character_id);
 `);
+
+sqliteClient.execute(`
+  CREATE TABLE IF NOT EXISTS hidden_characters (
+    character_id TEXT PRIMARY KEY NOT NULL
+  );
+`);

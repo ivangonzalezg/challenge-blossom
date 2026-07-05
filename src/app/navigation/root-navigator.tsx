@@ -5,14 +5,16 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useColorScheme } from 'react-native';
+import type {
+  CharactersFilter,
+  GenderFilter,
+  SpecieFilter,
+  StatusFilter,
+  VisibilityFilter,
+} from '@/entities/character';
 import AdvancedSearchResultsScreen from '@/screens/advanced-search-results/advanced-search-results.screen';
 import CharacterDetailScreen from '@/screens/character-detail/character-detail.screen';
 import CharactersListScreen from '@/screens/characters-list/characters-list.screen';
-
-export type CharactersFilter = 'all' | 'starred' | 'others';
-export type SpecieFilter = 'all' | 'human' | 'alien';
-export type StatusFilter = 'all' | 'alive' | 'dead' | 'unknown';
-export type GenderFilter = 'all' | 'female' | 'male' | 'genderless' | 'unknown';
 
 export type RootStackParamList = {
   CharactersList:
@@ -23,6 +25,7 @@ export type RootStackParamList = {
     specieFilter: SpecieFilter | '';
     statusFilter: StatusFilter | '';
     genderFilter: GenderFilter | '';
+    visibilityFilter: VisibilityFilter | '';
   };
 };
 
