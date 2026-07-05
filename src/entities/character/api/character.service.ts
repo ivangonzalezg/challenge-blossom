@@ -1,9 +1,11 @@
 import { graphqlClient } from '@/shared/api';
 import {
+  CHARACTER_FRAGMENT,
   GET_CHARACTER,
   GET_CHARACTERS,
 } from '@/entities/character/api/character.queries';
 import type {
+  Character,
   GetCharacterResponse,
   GetCharacterVariables,
   GetCharactersResponse,
@@ -70,6 +72,13 @@ export async function fetchCharacters(page = 1) {
   );
 
   return data.characters;
+}
+
+export function readCachedCharacter(id: string): Character | null {
+  return graphqlClient.readFragment<Character>({
+    id: graphqlClient.cache.identify({ __typename: 'Character', id }),
+    fragment: CHARACTER_FRAGMENT,
+  });
 }
 
 export async function fetchCharacter(id: string) {

@@ -1,13 +1,25 @@
 import { useCallback, useEffect, useState, useTransition } from 'react';
-import { fetchCharacter } from '@/entities/character/api/character.service';
+import {
+  fetchCharacter,
+  readCachedCharacter,
+} from '@/entities/character/api/character.service';
 import type { Character } from '@/entities/character/model/character.types';
 
 export function useCharacter(id: string) {
-  const [character, setCharacter] = useState<Character | null>(null);
+  const [character, setCharacter] = useState<Character | null>(() =>
+    readCachedCharacter(id),
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, startLoadingTransition] = useTransition();
 
   const loadCharacter = useCallback(() => {
+    const cachedCharacter = readCachedCharacter(id);
+    if (cachedCharacter) {
+      setCharacter(cachedCharacter);
+      setErrorMessage(null);
+      return;
+    }
+
     startLoadingTransition(async () => {
       try {
         const result = await fetchCharacter(id);

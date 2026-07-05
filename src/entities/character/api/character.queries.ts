@@ -33,3 +33,14 @@ export const GET_CHARACTER = gql`
     }
   }
 `;
+
+export const CHARACTER_FRAGMENT = gql`
+  fragment CharacterFragment on Character {
+    id
+    name
+    image
+    species
+    status
+    gender
+  }
+`;
