@@ -1,15 +1,44 @@
-import { Text } from 'react-native';
+import { ArrowDown, ArrowUp } from 'lucide-react-native';
+import { Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { colors } from './colors';
 
 type SectionHeaderProps = {
   title: string;
   count: number;
+  sortOrder?: 'asc' | 'desc';
+  onToggleSort?: () => void;
 };
 
-function SectionHeader({ title, count }: SectionHeaderProps) {
+function SectionHeader({
+  title,
+  count,
+  sortOrder,
+  onToggleSort,
+}: SectionHeaderProps) {
+  const isDarkMode = useColorScheme() === 'dark';
+  const ArrowIcon = sortOrder === 'desc' ? ArrowDown : ArrowUp;
+
   return (
-    <Text className="bg-white py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-neutral-950 dark:text-neutral-400">
-      {title} ({count})
-    </Text>
+    <View className="flex-row items-center justify-between bg-white py-4 dark:bg-neutral-950">
+      <Text className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400">
+        {title} ({count})
+      </Text>
+      {onToggleSort && (
+        <TouchableOpacity
+          onPress={onToggleSort}
+          activeOpacity={0.6}
+          className="flex-row items-center gap-1"
+        >
+          <Text className="text-xs font-semibold text-violet-700 dark:text-violet-400">
+            A-Z
+          </Text>
+          <ArrowIcon
+            color={isDarkMode ? colors.violet400 : colors.violet700}
+            size={14}
+          />
+        </TouchableOpacity>
+      )}
+    </View>
   );
 }
 

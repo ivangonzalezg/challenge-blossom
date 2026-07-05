@@ -6,6 +6,10 @@ export {
   useFavoriteCharacters,
   useIsFavorite,
 } from './lib/favorites-context';
+export {
+  sortCharactersByName,
+  type NameSortOrder,
+} from './lib/sort-characters-by-name';
 export type {
   Character,
   CharactersPageInfo,

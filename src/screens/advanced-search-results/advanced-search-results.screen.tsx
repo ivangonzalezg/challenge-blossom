@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ArrowLeft } from 'lucide-react-native';
+import { useState } from 'react';
 import {
   SectionList,
   Text,
@@ -10,9 +11,11 @@ import {
 import type { RootStackParamList } from '@/app/navigation/root-navigator';
 import {
   CharacterListItem,
+  sortCharactersByName,
   useCharactersList,
   useFavoriteCharacters,
   type Character,
+  type NameSortOrder,
 } from '@/entities/character';
 import {
   colors,
@@ -58,6 +61,8 @@ function AdvancedSearchResultsScreen({
   const { charactersFilter, specieFilter, statusFilter, genderFilter } =
     route.params;
   const isDarkMode = useColorScheme() === 'dark';
+  const [starredSortOrder, setStarredSortOrder] =
+    useState<NameSortOrder>('asc');
 
   const activeFilterCount =
     (charactersFilter !== '' && charactersFilter !== 'all' ? 1 : 0) +
@@ -105,18 +110,21 @@ function AdvancedSearchResultsScreen({
   const nonFavoriteCharacters = characters.filter(
     character => !favoriteIds.has(character.id),
   );
-  const starredCharacters = favoriteCharacters.filter(character => {
-    if (speciesQueryValue && character.species !== speciesQueryValue) {
-      return false;
-    }
-    if (statusQueryValue && character.status !== statusQueryValue) {
-      return false;
-    }
-    if (genderQueryValue && character.gender !== genderQueryValue) {
-      return false;
-    }
-    return true;
-  });
+  const starredCharacters = sortCharactersByName(
+    favoriteCharacters.filter(character => {
+      if (speciesQueryValue && character.species !== speciesQueryValue) {
+        return false;
+      }
+      if (statusQueryValue && character.status !== statusQueryValue) {
+        return false;
+      }
+      if (genderQueryValue && character.gender !== genderQueryValue) {
+        return false;
+      }
+      return true;
+    }),
+    starredSortOrder,
+  );
 
   const showStarredSection = charactersFilter !== 'others';
   const showCharactersSection = charactersFilter !== 'starred';
@@ -227,6 +235,19 @@ function AdvancedSearchResultsScreen({
                 section.title === STARRED_SECTION_TITLE
                   ? starredCharacters.length
                   : charactersSectionCount
+              }
+              sortOrder={
+                section.title === STARRED_SECTION_TITLE
+                  ? starredSortOrder
+                  : undefined
+              }
+              onToggleSort={
+                section.title === STARRED_SECTION_TITLE
+                  ? () =>
+                      setStarredSortOrder(previous =>
+                        previous === 'asc' ? 'desc' : 'asc',
+                      )
+                  : undefined
               }
             />
           )}

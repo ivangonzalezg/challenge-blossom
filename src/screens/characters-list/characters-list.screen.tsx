@@ -13,9 +13,11 @@ import {
 import type { RootStackParamList } from '@/app/navigation/root-navigator';
 import {
   CharacterListItem,
+  sortCharactersByName,
   useCharactersList,
   useFavoriteCharacters,
   type Character,
+  type NameSortOrder,
 } from '@/entities/character';
 import {
   colors,
@@ -39,6 +41,8 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
   const isDarkMode = useColorScheme() === 'dark';
   const [searchText, setSearchText] = useState('');
   const [debouncedSearchText, setDebouncedSearchText] = useState('');
+  const [starredSortOrder, setStarredSortOrder] =
+    useState<NameSortOrder>('asc');
   const isSearching = searchText.length > 0;
 
   useEffect(() => {
@@ -64,11 +68,14 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
   const nonFavoriteCharacters = characters.filter(
     character => !favoriteIds.has(character.id),
   );
-  const starredCharacters = isSearching
-    ? favoriteCharacters.filter(character =>
-        character.name.toLowerCase().includes(searchText.toLowerCase()),
-      )
-    : favoriteCharacters;
+  const starredCharacters = sortCharactersByName(
+    isSearching
+      ? favoriteCharacters.filter(character =>
+          character.name.toLowerCase().includes(searchText.toLowerCase()),
+        )
+      : favoriteCharacters,
+    starredSortOrder,
+  );
 
   const isInitialLoad = isLoading && characters.length === 0 && !isSearching;
   const isSearchLoading = isLoading && isSearching;
@@ -165,6 +172,19 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
                 section.title === STARRED_SECTION_TITLE
                   ? starredCharacters.length
                   : charactersCount
+              }
+              sortOrder={
+                section.title === STARRED_SECTION_TITLE
+                  ? starredSortOrder
+                  : undefined
+              }
+              onToggleSort={
+                section.title === STARRED_SECTION_TITLE
+                  ? () =>
+                      setStarredSortOrder(previous =>
+                        previous === 'asc' ? 'desc' : 'asc',
+                      )
+                  : undefined
               }
             />
           )}
