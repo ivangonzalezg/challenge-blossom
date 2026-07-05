@@ -6,6 +6,7 @@ type SectionHeaderProps = {
   title: string;
   count: number;
   sortOrder?: 'asc' | 'desc';
+  sortLabel?: string;
   onToggleSort?: () => void;
 };
 
@@ -13,6 +14,7 @@ function SectionHeader({
   title,
   count,
   sortOrder,
+  sortLabel = 'A-Z',
   onToggleSort,
 }: SectionHeaderProps) {
   const isDarkMode = useColorScheme() === 'dark';
@@ -30,7 +32,7 @@ function SectionHeader({
           className="flex-row items-center gap-1"
         >
           <Text className="text-xs font-semibold text-violet-700 dark:text-violet-400">
-            A-Z
+            {sortLabel}
           </Text>
           <ArrowIcon
             color={isDarkMode ? colors.violet400 : colors.violet700}
