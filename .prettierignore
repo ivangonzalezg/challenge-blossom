@@ -1,0 +1,9 @@
+node_modules/
+ios/
+android/
+vendor/
+coverage/
+docs/
+*.lock
+yarn.lock
+package-lock.json
