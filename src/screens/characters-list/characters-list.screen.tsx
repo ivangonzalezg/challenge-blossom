@@ -1,3 +1,4 @@
+import { Heart } from 'lucide-react-native';
 import { Text, TextInput, useColorScheme, View } from 'react-native';
 
 function CharactersListScreen() {
@@ -8,6 +9,7 @@ function CharactersListScreen() {
       <Text className="text-neutral-950 dark:text-neutral-50">
         Characters List
       </Text>
+      <Heart className="text-neutral-950 dark:text-neutral-50" />
       <TextInput
         className="mt-4 w-4/5 rounded-lg border border-neutral-200 px-3 py-2 text-neutral-950 dark:border-neutral-800 dark:text-neutral-50"
         placeholder="Search characters"
