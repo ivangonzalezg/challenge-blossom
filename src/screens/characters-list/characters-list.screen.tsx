@@ -1,48 +1,91 @@
-import { Heart } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { Text, TextInput, useColorScheme, View } from 'react-native';
-import { fetchCharacters } from '@/entities/character';
+import { Search, SlidersVertical } from 'lucide-react-native';
+import {
+  ActivityIndicator,
+  SectionList,
+  Text,
+  TextInput,
+  useColorScheme,
+  View,
+} from 'react-native';
+import { CharacterListItem, useCharactersList } from '@/entities/character';
+import { colors } from '@/shared/ui';
 
 function CharactersListScreen() {
   const isDarkMode = useColorScheme() === 'dark';
-  const [debugStatus, setDebugStatus] = useState('Loading characters...');
-
-  useEffect(() => {
-    let isMounted = true;
-
-    fetchCharacters(1)
-      .then(({ results }) => {
-        if (!isMounted) return;
-        setDebugStatus(`Loaded ${results.length} characters`);
-      })
-      .catch((error: unknown) => {
-        if (!isMounted) return;
-        console.error(
-          '[characters] failed to fetch characters from Rick and Morty GraphQL API:',
-          error,
-        );
-        setDebugStatus('Failed to load characters (see console)');
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const {
+    characters,
+    totalCount,
+    isLoading,
+    isLoadingMore,
+    errorMessage,
+    loadMoreErrorMessage,
+    loadNextPage,
+  } = useCharactersList();
 
   return (
-    <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-950">
-      <Text className="text-neutral-950 dark:text-neutral-50">
-        Characters List
-      </Text>
-      <Heart className="text-neutral-950 dark:text-neutral-50" />
-      <TextInput
-        className="mt-4 w-4/5 rounded-lg border border-neutral-200 px-3 py-2 text-neutral-950 dark:border-neutral-800 dark:text-neutral-50"
-        placeholder="Search characters"
-        placeholderTextColor={isDarkMode ? '#a3a3a3' : '#737373'}
-      />
-      <Text className="mt-4 text-xs text-neutral-500 dark:text-neutral-400">
-        {debugStatus}
-      </Text>
+    <View className="flex-1 bg-white dark:bg-neutral-950">
+      <View className="px-6 pt-7">
+        <Text className="text-2xl font-bold text-gray-800 dark:text-neutral-50">
+          Rick and Morty list
+        </Text>
+      </View>
+      <View className="px-6 py-4">
+        <View className="flex-row items-center gap-2 rounded-lg bg-gray-100 py-2 pl-3 pr-2 dark:bg-neutral-900">
+          <Search
+            color={isDarkMode ? colors.neutral400 : colors.gray400}
+            size={20}
+          />
+          <TextInput
+            className="flex-1 text-gray-500 dark:text-neutral-400"
+            placeholder="Search or filter results"
+            placeholderTextColor={
+              isDarkMode ? colors.neutral400 : colors.gray500
+            }
+            editable={false}
+          />
+          <SlidersVertical
+            color={isDarkMode ? colors.violet400 : colors.violet600}
+            size={20}
+          />
+        </View>
+      </View>
+
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator />
+        </View>
+      ) : errorMessage ? (
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="text-center text-gray-500 dark:text-neutral-400">
+            {errorMessage}
+          </Text>
+        </View>
+      ) : (
+        <SectionList
+          sections={[{ title: 'Characters', data: characters }]}
+          keyExtractor={character => character.id}
+          renderItem={({ item }) => <CharacterListItem character={item} />}
+          contentContainerClassName="px-6"
+          onEndReached={loadNextPage}
+          onEndReachedThreshold={0.5}
+          renderSectionHeader={({ section }) => (
+            <Text className="bg-white py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-neutral-950 dark:text-neutral-400">
+              {section.title} ({totalCount})
+            </Text>
+          )}
+          ListFooterComponent={
+            isLoadingMore ? (
+              <View className="py-4">
+                <ActivityIndicator />
+              </View>
+            ) : loadMoreErrorMessage ? (
+              <Text className="py-4 text-center text-gray-500 dark:text-neutral-400">
+                {loadMoreErrorMessage}
+              </Text>
+            ) : null
+          }
+        />
+      )}
     </View>
   );
 }

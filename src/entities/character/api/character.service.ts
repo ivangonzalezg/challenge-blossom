@@ -5,14 +5,64 @@ import type {
   GetCharactersVariables,
 } from '@/entities/character/model/character.types';
 
+const MAX_ATTEMPTS = 3;
+const DEFAULT_RETRY_DELAY_MS = 2000;
+
+type ServerError = Error & {
+  response: Response;
+  statusCode: number;
+};
+
+function isServerError(error: unknown): error is ServerError {
+  return (
+    error instanceof Error &&
+    typeof (error as ServerError).statusCode === 'number'
+  );
+}
+
+function getRetryDelayMs(error: ServerError): number {
+  const retryAfterHeader = error.response.headers.get('retry-after');
+  const retryAfterSeconds = Number(retryAfterHeader);
+
+  if (!retryAfterHeader || Number.isNaN(retryAfterSeconds)) {
+    return DEFAULT_RETRY_DELAY_MS;
+  }
+
+  return retryAfterSeconds * 1000;
+}
+
+function wait(delayMs: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, delayMs));
+}
+
+async function withRetryOn429<T>(operation: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+
+      const isLastAttempt = attempt === MAX_ATTEMPTS;
+      if (!isServerError(error) || error.statusCode !== 429 || isLastAttempt) {
+        throw error;
+      }
+
+      await wait(getRetryDelayMs(error));
+    }
+  }
+
+  throw lastError;
+}
+
 export async function fetchCharacters(page = 1) {
-  const { data } = await graphqlClient.query<
-    GetCharactersResponse,
-    GetCharactersVariables
-  >({
-    query: GET_CHARACTERS,
-    variables: { page },
-  });
+  const { data } = await withRetryOn429(() =>
+    graphqlClient.query<GetCharactersResponse, GetCharactersVariables>({
+      query: GET_CHARACTERS,
+      variables: { page },
+    }),
+  );
 
   return data.characters;
 }
