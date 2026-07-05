@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ArrowLeft, Heart, Send } from 'lucide-react-native';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -50,13 +50,19 @@ function CharacterDetailScreen({
       : a.createdAt - b.createdAt,
   );
 
-  async function handleAddComment() {
+  const handleAddComment = useCallback(async () => {
     const trimmedText = commentText.trim();
     if (!trimmedText) return;
 
     setCommentText('');
     await addComment(trimmedText);
-  }
+  }, [commentText, addComment]);
+
+  const handleToggleCommentSort = useCallback(() => {
+    setCommentSortOrder(previous =>
+      previous === 'newest' ? 'oldest' : 'newest',
+    );
+  }, []);
 
   return (
     <View className="flex-1 bg-white dark:bg-neutral-950">
@@ -147,12 +153,7 @@ function CharacterDetailScreen({
                     commentSortOrder === 'newest' ? 'Newest' : 'Oldest'
                   }
                   onToggleSort={
-                    comments.length > 1
-                      ? () =>
-                          setCommentSortOrder(previous =>
-                            previous === 'newest' ? 'oldest' : 'newest',
-                          )
-                      : undefined
+                    comments.length > 1 ? handleToggleCommentSort : undefined
                   }
                 />
 

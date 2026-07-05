@@ -10,9 +10,7 @@ type CommentListItemProps = {
 function CommentListItem({ comment }: CommentListItemProps) {
   return (
     <View className="rounded-lg bg-gray-100 p-3 dark:bg-neutral-900">
-      <Text className="text-gray-900 dark:text-neutral-50">
-        {comment.text}
-      </Text>
+      <Text className="text-gray-900 dark:text-neutral-50">{comment.text}</Text>
       <CommentTimeAgo timestamp={comment.createdAt} />
     </View>
   );

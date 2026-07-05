@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ArrowLeft } from 'lucide-react-native';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   SectionList,
   Text,
@@ -152,24 +152,97 @@ function AdvancedSearchResultsScreen({
       : []),
   ];
 
-  function renderStarredFooter() {
+  const renderStarredFooter = useCallback(() => {
     if (starredCharacters.length > 0) return null;
     return <SectionFooterMessage>No matches</SectionFooterMessage>;
-  }
+  }, [starredCharacters.length]);
 
-  function renderCharactersFooter() {
+  const renderCharactersFooter = useCallback(() => {
     if (isLoading) return <SectionFooterSpinner />;
     if (nonFavoriteCharacters.length === 0) {
       return <SectionFooterMessage>No matches</SectionFooterMessage>;
     }
     return null;
-  }
+  }, [isLoading, nonFavoriteCharacters.length]);
+
+  const handleToggleStarredSort = useCallback(() => {
+    setStarredSortOrder(previous => (previous === 'asc' ? 'desc' : 'asc'));
+  }, []);
+
+  const handleBackToFilters = useCallback(() => {
+    navigation.navigate(
+      'CharactersList',
+      { reopenFilters: true },
+      { pop: true },
+    );
+  }, [navigation]);
+
+  const handleDone = useCallback(() => {
+    navigation.navigate(
+      'CharactersList',
+      { clearFilters: true },
+      { pop: true },
+    );
+  }, [navigation]);
+
+  const keyExtractor = useCallback((character: Character) => character.id, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Character }) => (
+      <CharacterListItem
+        character={item}
+        isFavorite={favoriteIds.has(item.id)}
+        onPress={() =>
+          navigation.navigate('CharacterDetail', {
+            characterId: item.id,
+          })
+        }
+        onFavoritePress={() => toggleFavorite(item)}
+      />
+    ),
+    [favoriteIds, navigation, toggleFavorite],
+  );
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: { title: string } }) => (
+      <SectionHeader
+        title={section.title}
+        count={
+          section.title === STARRED_SECTION_TITLE
+            ? starredCharacters.length
+            : charactersSectionCount
+        }
+        sortOrder={
+          section.title === STARRED_SECTION_TITLE ? starredSortOrder : undefined
+        }
+        onToggleSort={
+          section.title === STARRED_SECTION_TITLE
+            ? handleToggleStarredSort
+            : undefined
+        }
+      />
+    ),
+    [
+      starredCharacters.length,
+      charactersSectionCount,
+      starredSortOrder,
+      handleToggleStarredSort,
+    ],
+  );
+
+  const renderSectionFooter = useCallback(
+    ({ section }: { section: { title: string } }) =>
+      section.title === STARRED_SECTION_TITLE
+        ? renderStarredFooter()
+        : renderCharactersFooter(),
+    [renderStarredFooter, renderCharactersFooter],
+  );
 
   return (
     <View className="flex-1 bg-white px-6 dark:bg-neutral-950">
       <View className="relative flex justify-center py-4 my-2">
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={handleBackToFilters}
           activeOpacity={0.6}
           className="absolute -left-3 p-3 z-10"
         >
@@ -182,7 +255,7 @@ function AdvancedSearchResultsScreen({
           Advanced search
         </Text>
         <TouchableOpacity
-          onPress={() => navigation.popToTop()}
+          onPress={handleDone}
           activeOpacity={0.6}
           className="absolute right-0 p-3"
         >
@@ -211,51 +284,14 @@ function AdvancedSearchResultsScreen({
       ) : (
         <SectionList
           sections={sections}
-          keyExtractor={character => character.id}
-          renderItem={({ item }: { item: Character }) => (
-            <CharacterListItem
-              character={item}
-              isFavorite={favoriteIds.has(item.id)}
-              onPress={() =>
-                navigation.navigate('CharacterDetail', {
-                  characterId: item.id,
-                })
-              }
-              onFavoritePress={() => toggleFavorite(item)}
-            />
-          )}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
           onEndReached={
             showCharactersSection && !isLoading ? loadNextPage : undefined
           }
           onEndReachedThreshold={0.5}
-          renderSectionHeader={({ section }) => (
-            <SectionHeader
-              title={section.title}
-              count={
-                section.title === STARRED_SECTION_TITLE
-                  ? starredCharacters.length
-                  : charactersSectionCount
-              }
-              sortOrder={
-                section.title === STARRED_SECTION_TITLE
-                  ? starredSortOrder
-                  : undefined
-              }
-              onToggleSort={
-                section.title === STARRED_SECTION_TITLE
-                  ? () =>
-                      setStarredSortOrder(previous =>
-                        previous === 'asc' ? 'desc' : 'asc',
-                      )
-                  : undefined
-              }
-            />
-          )}
-          renderSectionFooter={({ section }) =>
-            section.title === STARRED_SECTION_TITLE
-              ? renderStarredFooter()
-              : renderCharactersFooter()
-          }
+          renderSectionHeader={renderSectionHeader}
+          renderSectionFooter={renderSectionFooter}
           ListFooterComponent={
             isLoadingMore ? (
               <SectionFooterSpinner />

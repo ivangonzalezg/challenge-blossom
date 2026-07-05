@@ -1,21 +1,12 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ArrowLeft } from 'lucide-react-native';
-import { useState } from 'react';
 import { Text, TouchableOpacity, useColorScheme, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import type {
   CharactersFilter,
   GenderFilter,
-  RootStackParamList,
   SpecieFilter,
   StatusFilter,
 } from '@/app/navigation/root-navigator';
 import { colors } from '@/shared/ui';
-
-type CharacterFiltersScreenProps = NativeStackScreenProps<
-  RootStackParamList,
-  'CharacterFilters'
->;
+import { ArrowLeft } from 'lucide-react-native';
 
 const CHARACTERS_FILTER_OPTIONS: { label: string; value: CharactersFilter }[] =
   [
@@ -120,14 +111,32 @@ function FilterSection<T extends string>({
   );
 }
 
-function CharacterFiltersScreen({ navigation }: CharacterFiltersScreenProps) {
+type CharacterFiltersSheetContentProps = {
+  charactersFilter: CharactersFilter | '';
+  onChangeCharactersFilter: (value: CharactersFilter) => void;
+  specieFilter: SpecieFilter | '';
+  onChangeSpecieFilter: (value: SpecieFilter) => void;
+  statusFilter: StatusFilter | '';
+  onChangeStatusFilter: (value: StatusFilter) => void;
+  genderFilter: GenderFilter | '';
+  onChangeGenderFilter: (value: GenderFilter) => void;
+  onApply: () => void;
+  onClose: () => void;
+};
+
+function CharacterFiltersSheetContent({
+  charactersFilter,
+  onChangeCharactersFilter,
+  specieFilter,
+  onChangeSpecieFilter,
+  statusFilter,
+  onChangeStatusFilter,
+  genderFilter,
+  onChangeGenderFilter,
+  onApply,
+  onClose,
+}: CharacterFiltersSheetContentProps) {
   const isDarkMode = useColorScheme() === 'dark';
-  const [charactersFilter, setCharactersFilter] = useState<
-    CharactersFilter | ''
-  >('');
-  const [specieFilter, setSpecieFilter] = useState<SpecieFilter | ''>('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter | ''>('');
-  const [genderFilter, setGenderFilter] = useState<GenderFilter | ''>('');
 
   const isFilterActive =
     charactersFilter !== '' ||
@@ -136,86 +145,73 @@ function CharacterFiltersScreen({ navigation }: CharacterFiltersScreenProps) {
     genderFilter !== '';
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
-      <View className="flex-1 bg-white px-6 dark:bg-neutral-950">
-        <View className="relative flex justify-center py-4 my-2">
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.6}
-            className="absolute -left-3 p-3 z-10"
-          >
-            <ArrowLeft
-              color={isDarkMode ? colors.neutral400 : colors.violet700}
-              size={24}
-            />
-          </TouchableOpacity>
-          <Text className="text-center font-semibold text-gray-800 dark:text-neutral-50">
-            Filters
-          </Text>
-        </View>
-
-        <FilterSection
-          title="Characters"
-          options={CHARACTERS_FILTER_OPTIONS}
-          selectedValue={charactersFilter}
-          onSelect={setCharactersFilter}
-          isFirst
-        />
-
-        <FilterSection
-          title="Specie"
-          options={SPECIE_FILTER_OPTIONS}
-          selectedValue={specieFilter}
-          onSelect={setSpecieFilter}
-        />
-
-        <FilterSection
-          title="Status"
-          options={STATUS_FILTER_OPTIONS}
-          selectedValue={statusFilter}
-          onSelect={setStatusFilter}
-        />
-
-        <FilterSection
-          title="Gender"
-          options={GENDER_FILTER_OPTIONS}
-          selectedValue={genderFilter}
-          onSelect={setGenderFilter}
-          wrap
-        />
-
-        <View className="flex-1" />
-
-        <View className="">
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('AdvancedSearchResults', {
-                charactersFilter,
-                specieFilter,
-                statusFilter,
-                genderFilter,
-              })
-            }
-            activeOpacity={0.6}
-            className="py-3 items-center justify-center rounded-lg"
-            style={{
-              backgroundColor: isFilterActive
-                ? colors.violet700
-                : colors.gray100,
-            }}
-          >
-            <Text
-              className={`text-sm font-medium ${
-                isFilterActive ? 'text-white' : 'text-gray-500'
-              }`}
-            >
-              Filter
-            </Text>
-          </TouchableOpacity>
-        </View>
+    <View className="flex-1 bg-white px-6 dark:bg-neutral-950">
+      <View className="relative flex justify-center py-4 my-2">
+        <TouchableOpacity
+          onPress={() => onClose()}
+          activeOpacity={0.6}
+          className="absolute -left-3 p-3 z-10"
+        >
+          <ArrowLeft
+            color={isDarkMode ? colors.violet400 : colors.violet700}
+            size={24}
+          />
+        </TouchableOpacity>
+        <Text className="text-center font-semibold text-gray-800 dark:text-neutral-50">
+          Filters
+        </Text>
       </View>
-    </SafeAreaView>
+
+      <FilterSection
+        title="Characters"
+        options={CHARACTERS_FILTER_OPTIONS}
+        selectedValue={charactersFilter}
+        onSelect={onChangeCharactersFilter}
+        isFirst
+      />
+
+      <FilterSection
+        title="Specie"
+        options={SPECIE_FILTER_OPTIONS}
+        selectedValue={specieFilter}
+        onSelect={onChangeSpecieFilter}
+      />
+
+      <FilterSection
+        title="Status"
+        options={STATUS_FILTER_OPTIONS}
+        selectedValue={statusFilter}
+        onSelect={onChangeStatusFilter}
+      />
+
+      <FilterSection
+        title="Gender"
+        options={GENDER_FILTER_OPTIONS}
+        selectedValue={genderFilter}
+        onSelect={onChangeGenderFilter}
+        wrap
+      />
+
+      <View className="pt-6 pb-4">
+        <TouchableOpacity
+          onPress={onApply}
+          activeOpacity={0.6}
+          className="py-3 items-center justify-center rounded-lg"
+          style={{
+            backgroundColor: isFilterActive ? colors.violet700 : colors.gray100,
+          }}
+        >
+          <Text
+            className={`text-sm font-medium ${
+              isFilterActive ? 'text-white' : 'text-gray-500'
+            }`}
+          >
+            Filter
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
-export default CharacterFiltersScreen;
+export default CharacterFiltersSheetContent;
