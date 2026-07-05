@@ -91,6 +91,7 @@ export function useCharactersList(
   return {
     characters,
     totalCount: pageInfo?.count ?? 0,
+    hasNextPage: pageInfo?.next != null,
     isLoading,
     isLoadingMore,
     errorMessage,

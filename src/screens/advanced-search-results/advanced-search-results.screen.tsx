@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ArrowLeft } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   SectionList,
   Text,
@@ -101,6 +101,7 @@ function AdvancedSearchResultsScreen({
   const {
     characters,
     totalCount,
+    hasNextPage,
     isLoading,
     isLoadingMore,
     errorMessage,
@@ -114,15 +115,10 @@ function AdvancedSearchResultsScreen({
   );
   const { favoriteCharacters, favoriteIds, toggleFavorite } =
     useFavoriteCharacters();
-  const { hiddenIds } = useHiddenCharacters();
+  const { hiddenCharacters, hiddenIds } = useHiddenCharacters();
 
-  const nonFavoriteCharacters = characters.filter(
-    character =>
-      !favoriteIds.has(character.id) &&
-      passesVisibilityFilter(character.id, hiddenIds, visibilityFilter),
-  );
-  const starredCharacters = sortCharactersByName(
-    favoriteCharacters.filter(character => {
+  const matchesActiveFilters = useCallback(
+    (character: Character) => {
       if (speciesQueryValue && character.species !== speciesQueryValue) {
         return false;
       }
@@ -132,25 +128,80 @@ function AdvancedSearchResultsScreen({
       if (genderQueryValue && character.gender !== genderQueryValue) {
         return false;
       }
-      if (!passesVisibilityFilter(character.id, hiddenIds, visibilityFilter)) {
-        return false;
-      }
       return true;
-    }),
+    },
+    [speciesQueryValue, statusQueryValue, genderQueryValue],
+  );
+
+  const isHiddenOnlyView = visibilityFilter === 'hidden';
+  const isVisibleOnlyView =
+    visibilityFilter === 'visible' || visibilityFilter === '';
+
+  const nonFavoriteHiddenCharacters = hiddenCharacters.filter(
+    character =>
+      !favoriteIds.has(character.id) && matchesActiveFilters(character),
+  );
+
+  const nonFavoriteCharacters = isHiddenOnlyView
+    ? nonFavoriteHiddenCharacters
+    : characters.filter(
+        character =>
+          !favoriteIds.has(character.id) &&
+          passesVisibilityFilter(character.id, hiddenIds, visibilityFilter),
+      );
+
+  const starredCharacters = sortCharactersByName(
+    favoriteCharacters.filter(
+      character =>
+        matchesActiveFilters(character) &&
+        passesVisibilityFilter(character.id, hiddenIds, visibilityFilter),
+    ),
     starredSortOrder,
   );
 
   const showStarredSection = charactersFilter !== 'others';
   const showCharactersSection = charactersFilter !== 'starred';
 
-  const charactersSectionCount = Math.max(
-    0,
-    totalCount - starredCharacters.length,
-  );
+  const favoritesMatchingFiltersCount =
+    favoriteCharacters.filter(matchesActiveFilters).length;
+
+  const charactersSectionCount = isHiddenOnlyView
+    ? nonFavoriteHiddenCharacters.length
+    : isVisibleOnlyView
+      ? Math.max(
+          0,
+          totalCount -
+            favoritesMatchingFiltersCount -
+            nonFavoriteHiddenCharacters.length,
+        )
+      : Math.max(0, totalCount - favoritesMatchingFiltersCount);
 
   const resultsCount =
     (showStarredSection ? starredCharacters.length : 0) +
     (showCharactersSection ? charactersSectionCount : 0);
+
+  const isCharactersSectionLoading = isHiddenOnlyView ? false : isLoading;
+
+  useEffect(() => {
+    if (
+      !isHiddenOnlyView &&
+      showCharactersSection &&
+      hasNextPage &&
+      !isLoading &&
+      !isLoadingMore &&
+      nonFavoriteCharacters.length === 0
+    ) {
+      loadNextPage();
+    }
+  }, [
+    isHiddenOnlyView,
+    showCharactersSection,
+    hasNextPage,
+    isLoading,
+    isLoadingMore,
+    nonFavoriteCharacters.length,
+    loadNextPage,
+  ]);
 
   const sections = [
     ...(showStarredSection
@@ -160,7 +211,7 @@ function AdvancedSearchResultsScreen({
       ? [
           {
             title: CHARACTERS_SECTION_TITLE,
-            data: isLoading ? [] : nonFavoriteCharacters,
+            data: isCharactersSectionLoading ? [] : nonFavoriteCharacters,
           },
         ]
       : []),
@@ -172,12 +223,12 @@ function AdvancedSearchResultsScreen({
   }, [starredCharacters.length]);
 
   const renderCharactersFooter = useCallback(() => {
-    if (isLoading) return <SectionFooterSpinner />;
+    if (isCharactersSectionLoading) return <SectionFooterSpinner />;
     if (nonFavoriteCharacters.length === 0) {
       return <SectionFooterMessage>No matches</SectionFooterMessage>;
     }
     return null;
-  }, [isLoading, nonFavoriteCharacters.length]);
+  }, [isCharactersSectionLoading, nonFavoriteCharacters.length]);
 
   const handleToggleStarredSort = useCallback(() => {
     setStarredSortOrder(previous => (previous === 'asc' ? 'desc' : 'asc'));
@@ -301,15 +352,17 @@ function AdvancedSearchResultsScreen({
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           onEndReached={
-            showCharactersSection && !isLoading ? loadNextPage : undefined
+            showCharactersSection && !isHiddenOnlyView && !isLoading
+              ? loadNextPage
+              : undefined
           }
           onEndReachedThreshold={0.5}
           renderSectionHeader={renderSectionHeader}
           renderSectionFooter={renderSectionFooter}
           ListFooterComponent={
-            isLoadingMore ? (
+            !isHiddenOnlyView && isLoadingMore ? (
               <SectionFooterSpinner />
-            ) : loadMoreErrorMessage ? (
+            ) : !isHiddenOnlyView && loadMoreErrorMessage ? (
               <SectionFooterMessage>
                 {loadMoreErrorMessage}
               </SectionFooterMessage>

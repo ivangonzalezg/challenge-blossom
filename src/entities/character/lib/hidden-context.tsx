@@ -13,8 +13,11 @@ import {
   hideCharacter,
   restoreCharacter,
 } from '@/entities/character/api/hidden.service';
+import { fetchCharactersByIds } from '@/entities/character/api/character.service';
+import type { Character } from '@/entities/character/model/character.types';
 
 type HiddenCharactersContextValue = {
+  hiddenCharacters: Character[];
   hiddenIds: Set<string>;
   isLoading: boolean;
   errorMessage: string | null;
@@ -29,6 +32,7 @@ export function HiddenCharactersProvider({
 }: {
   children: ReactNode;
 }) {
+  const [hiddenCharacters, setHiddenCharacters] = useState<Character[]>([]);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, startLoadingTransition] = useTransition();
@@ -37,6 +41,8 @@ export function HiddenCharactersProvider({
     startLoadingTransition(async () => {
       try {
         const ids = await getHiddenIds();
+        const characters = await fetchCharactersByIds(ids);
+        setHiddenCharacters(characters);
         setHiddenIds(new Set(ids));
         setErrorMessage(null);
       } catch (error) {
@@ -57,6 +63,9 @@ export function HiddenCharactersProvider({
       try {
         if (isCurrentlyHidden) {
           await restoreCharacter(characterId);
+          setHiddenCharacters(previous =>
+            previous.filter(existing => existing.id !== characterId),
+          );
           setHiddenIds(previous => {
             const next = new Set(previous);
             next.delete(characterId);
@@ -64,6 +73,10 @@ export function HiddenCharactersProvider({
           });
         } else {
           await hideCharacter(characterId);
+          const [character] = await fetchCharactersByIds([characterId]);
+          if (character) {
+            setHiddenCharacters(previous => [...previous, character]);
+          }
           setHiddenIds(previous => new Set(previous).add(characterId));
         }
       } catch (error) {
@@ -75,12 +88,13 @@ export function HiddenCharactersProvider({
 
   const value = useMemo(
     () => ({
+      hiddenCharacters,
       hiddenIds,
       isLoading,
       errorMessage,
       toggleHidden,
     }),
-    [hiddenIds, isLoading, errorMessage, toggleHidden],
+    [hiddenCharacters, hiddenIds, isLoading, errorMessage, toggleHidden],
   );
 
   return (
