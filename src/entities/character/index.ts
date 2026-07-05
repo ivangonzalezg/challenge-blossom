@@ -1,8 +1,11 @@
 export { fetchCharacter, fetchCharacters } from './api/character.service';
 export { useCharacter } from './lib/use-character';
 export { useCharactersList } from './lib/use-characters-list';
-export { useFavoriteCharacters } from './lib/use-favorite-characters';
-export { useIsFavorite } from './lib/use-is-favorite';
+export {
+  FavoritesProvider,
+  useFavoriteCharacters,
+  useIsFavorite,
+} from './lib/favorites-context';
 export type {
   Character,
   CharactersPageInfo,

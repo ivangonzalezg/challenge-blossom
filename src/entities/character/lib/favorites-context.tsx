@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useState, useTransition } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from 'react';
 import {
   addFavorite,
   getFavoriteIds,
@@ -7,7 +16,17 @@ import {
 import { fetchCharactersByIds } from '@/entities/character/api/character.service';
 import type { Character } from '@/entities/character/model/character.types';
 
-export function useFavoriteCharacters() {
+type FavoritesContextValue = {
+  favoriteCharacters: Character[];
+  favoriteIds: Set<string>;
+  isLoading: boolean;
+  errorMessage: string | null;
+  toggleFavorite: (character: Character) => Promise<void>;
+};
+
+const FavoritesContext = createContext<FavoritesContextValue | null>(null);
+
+export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favoriteCharacters, setFavoriteCharacters] = useState<Character[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -62,11 +81,38 @@ export function useFavoriteCharacters() {
     [favoriteIds],
   );
 
-  return {
-    favoriteCharacters,
-    favoriteIds,
-    isLoading,
-    errorMessage,
-    toggleFavorite,
-  };
+  const value = useMemo(
+    () => ({
+      favoriteCharacters,
+      favoriteIds,
+      isLoading,
+      errorMessage,
+      toggleFavorite,
+    }),
+    [favoriteCharacters, favoriteIds, isLoading, errorMessage, toggleFavorite],
+  );
+
+  return (
+    <FavoritesContext.Provider value={value}>
+      {children}
+    </FavoritesContext.Provider>
+  );
+}
+
+export function useFavoriteCharacters() {
+  const context = useContext(FavoritesContext);
+
+  if (!context) {
+    throw new Error(
+      'useFavoriteCharacters must be used within a FavoritesProvider',
+    );
+  }
+
+  return context;
+}
+
+export function useIsFavorite(characterId: string) {
+  const { favoriteIds } = useFavoriteCharacters();
+
+  return favoriteIds.has(characterId);
 }
