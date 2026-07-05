@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import type { RootStackParamList } from '@/app/navigation/root-navigator';
-import { useCharacter } from '@/entities/character';
+import { useCharacter, useIsFavorite } from '@/entities/character';
 import { AvatarImage, colors } from '@/shared/ui';
 
 type CharacterDetailScreenProps = NativeStackScreenProps<
@@ -25,6 +25,7 @@ function CharacterDetailScreen({
   const { character, isLoading, errorMessage } = useCharacter(
     route.params.characterId,
   );
+  const isFavorite = useIsFavorite(route.params.characterId);
 
   return (
     <ScrollView
@@ -58,9 +59,15 @@ function CharacterDetailScreen({
               fallbackLabel={character.name}
               className="size-[75px] rounded-full"
             />
-            <View className="size-8 items-center justify-center rounded-full bg-white absolute -bottom-1 -right-1">
-              <Heart color={colors.green500} fill={colors.green500} size={20} />
-            </View>
+            {isFavorite && (
+              <View className="size-8 items-center justify-center rounded-full bg-white absolute -bottom-1 -right-1">
+                <Heart
+                  color={colors.green500}
+                  fill={colors.green500}
+                  size={20}
+                />
+              </View>
+            )}
           </View>
           <View className="pt-2 pb-4">
             <Text className="text-2xl font-bold leading-8 text-gray-900 dark:text-neutral-50">

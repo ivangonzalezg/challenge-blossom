@@ -1,5 +1,8 @@
 import { ApolloError } from '@apollo/client';
-import { fetchCharacters } from '@/entities/character/api/character.service';
+import {
+  fetchCharacters,
+  fetchCharactersByIds,
+} from '@/entities/character/api/character.service';
 import { graphqlClient } from '@/shared/api';
 
 jest.mock('@/shared/api', () => ({
@@ -126,6 +129,55 @@ describe('fetchCharacters', () => {
     mockedQuery.mockRejectedValueOnce(networkError);
 
     await expect(fetchCharacters(1)).rejects.toThrow('Network error');
+    expect(mockedQuery).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('fetchCharactersByIds', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mockedQuery.mockReset();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('returns an empty array without calling the network when given no ids', async () => {
+    const result = await fetchCharactersByIds([]);
+
+    expect(result).toEqual([]);
+    expect(mockedQuery).not.toHaveBeenCalled();
+  });
+
+  it('fetches and returns characters for the given ids', async () => {
+    mockedQuery.mockResolvedValueOnce({
+      data: {
+        charactersByIds: [
+          {
+            id: '1',
+            name: 'Rick Sanchez',
+            image: 'https://rickandmortyapi.com/api/character/avatar/1.jpeg',
+            species: 'Human',
+            status: 'Alive',
+            gender: 'Male',
+          },
+        ],
+      },
+    });
+
+    const result = await fetchCharactersByIds(['1']);
+
+    expect(result).toEqual([
+      {
+        id: '1',
+        name: 'Rick Sanchez',
+        image: 'https://rickandmortyapi.com/api/character/avatar/1.jpeg',
+        species: 'Human',
+        status: 'Alive',
+        gender: 'Male',
+      },
+    ]);
     expect(mockedQuery).toHaveBeenCalledTimes(1);
   });
 });

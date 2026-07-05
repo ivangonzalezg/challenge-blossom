@@ -1,6 +1,8 @@
 export { fetchCharacter, fetchCharacters } from './api/character.service';
 export { useCharacter } from './lib/use-character';
 export { useCharactersList } from './lib/use-characters-list';
+export { useFavoriteCharacters } from './lib/use-favorite-characters';
+export { useIsFavorite } from './lib/use-is-favorite';
 export type {
   Character,
   CharactersPageInfo,

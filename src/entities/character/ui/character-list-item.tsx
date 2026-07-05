@@ -11,12 +11,14 @@ import { AvatarImage, colors } from '@/shared/ui';
 
 type CharacterListItemProps = {
   character: Character;
+  isFavorite?: boolean;
   onPress?: () => void;
   onFavoritePress?: () => void;
 };
 
 function CharacterListItem({
   character,
+  isFavorite = false,
   onPress,
   onFavoritePress,
 }: CharacterListItemProps) {
@@ -48,10 +50,17 @@ function CharacterListItem({
           hitSlop={8}
           activeOpacity={0.6}
           accessibilityRole="button"
-          accessibilityLabel={`Favorite ${character.name}`}
+          accessibilityLabel={`${isFavorite ? 'Unfavorite' : 'Favorite'} ${character.name}`}
         >
           <Heart
-            color={isDarkMode ? colors.neutral600 : colors.gray300}
+            color={
+              isFavorite
+                ? colors.green500
+                : isDarkMode
+                  ? colors.neutral600
+                  : colors.gray300
+            }
+            fill={isFavorite ? colors.green500 : 'none'}
             size={24}
           />
         </TouchableOpacity>

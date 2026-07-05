@@ -34,6 +34,19 @@ export const GET_CHARACTER = gql`
   }
 `;
 
+export const GET_CHARACTERS_BY_IDS = gql`
+  query GetCharactersByIds($ids: [ID!]!) {
+    charactersByIds(ids: $ids) {
+      id
+      name
+      image
+      species
+      status
+      gender
+    }
+  }
+`;
+
 export const CHARACTER_FRAGMENT = gql`
   fragment CharacterFragment on Character {
     id

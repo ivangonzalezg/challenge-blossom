@@ -32,3 +32,11 @@ export type GetCharacterResponse = {
 export type GetCharacterVariables = {
   id: string;
 };
+
+export type GetCharactersByIdsResponse = {
+  charactersByIds: Character[];
+};
+
+export type GetCharactersByIdsVariables = {
+  ids: string[];
+};

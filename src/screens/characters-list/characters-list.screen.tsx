@@ -9,7 +9,11 @@ import {
   View,
 } from 'react-native';
 import type { RootStackParamList } from '@/app/navigation/root-navigator';
-import { CharacterListItem, useCharactersList } from '@/entities/character';
+import {
+  CharacterListItem,
+  useCharactersList,
+  useFavoriteCharacters,
+} from '@/entities/character';
 import { colors } from '@/shared/ui';
 
 type CharactersListScreenProps = NativeStackScreenProps<
@@ -28,6 +32,11 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
     loadMoreErrorMessage,
     loadNextPage,
   } = useCharactersList();
+  const { favoriteCharacters, favoriteIds, toggleFavorite } =
+    useFavoriteCharacters();
+  const nonFavoriteCharacters = characters.filter(
+    character => !favoriteIds.has(character.id),
+  );
 
   return (
     <View className="flex-1 bg-white dark:bg-neutral-950 px-6">
@@ -69,25 +78,42 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
         </View>
       ) : (
         <SectionList
-          sections={[{ title: 'Characters', data: characters }]}
+          sections={[
+            { title: 'Starred Characters', data: favoriteCharacters },
+            { title: 'Characters', data: nonFavoriteCharacters },
+          ]}
           keyExtractor={character => character.id}
           renderItem={({ item }) => (
             <CharacterListItem
               character={item}
+              isFavorite={favoriteIds.has(item.id)}
               onPress={() =>
                 navigation.navigate('CharacterDetail', {
                   characterId: item.id,
                 })
               }
+              onFavoritePress={() => toggleFavorite(item)}
             />
           )}
           onEndReached={loadNextPage}
           onEndReachedThreshold={0.5}
           renderSectionHeader={({ section }) => (
             <Text className="bg-white py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-neutral-950 dark:text-neutral-400">
-              {section.title} ({totalCount})
+              {section.title} (
+              {section.title === 'Starred Characters'
+                ? favoriteCharacters.length
+                : totalCount - favoriteIds.size}
+              )
             </Text>
           )}
+          renderSectionFooter={({ section }) =>
+            section.title === 'Starred Characters' &&
+            favoriteCharacters.length === 0 ? (
+              <Text className="pb-4 text-center text-gray-500 dark:text-neutral-400">
+                No favorites yet
+              </Text>
+            ) : null
+          }
           ListFooterComponent={
             isLoadingMore ? (
               <View className="py-4">

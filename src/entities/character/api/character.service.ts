@@ -3,11 +3,14 @@ import {
   CHARACTER_FRAGMENT,
   GET_CHARACTER,
   GET_CHARACTERS,
+  GET_CHARACTERS_BY_IDS,
 } from '@/entities/character/api/character.queries';
 import type {
   Character,
   GetCharacterResponse,
   GetCharacterVariables,
+  GetCharactersByIdsResponse,
+  GetCharactersByIdsVariables,
   GetCharactersResponse,
   GetCharactersVariables,
 } from '@/entities/character/model/character.types';
@@ -90,4 +93,24 @@ export async function fetchCharacter(id: string) {
   );
 
   return data.character;
+}
+
+export async function fetchCharactersByIds(
+  ids: string[],
+): Promise<Character[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const { data } = await withRetryOn429(() =>
+    graphqlClient.query<
+      GetCharactersByIdsResponse,
+      GetCharactersByIdsVariables
+    >({
+      query: GET_CHARACTERS_BY_IDS,
+      variables: { ids },
+    }),
+  );
+
+  return data.charactersByIds;
 }
