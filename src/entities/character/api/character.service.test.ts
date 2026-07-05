@@ -92,6 +92,30 @@ describe('fetchCharacters', () => {
     );
   });
 
+  it('passes a species filter variable when a species is provided', async () => {
+    mockedQuery.mockResolvedValueOnce(successResponse);
+
+    await fetchCharacters(1, undefined, 'Human');
+
+    expect(mockedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: { page: 1, filter: { name: undefined, species: 'Human' } },
+      }),
+    );
+  });
+
+  it('passes both name and species filter variables when both are provided', async () => {
+    mockedQuery.mockResolvedValueOnce(successResponse);
+
+    await fetchCharacters(1, 'rick', 'Human');
+
+    expect(mockedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: { page: 1, filter: { name: 'rick', species: 'Human' } },
+      }),
+    );
+  });
+
   it('retries after a 429, waiting for the retry-after header duration', async () => {
     mockedQuery
       .mockRejectedValueOnce(make429Error('3'))

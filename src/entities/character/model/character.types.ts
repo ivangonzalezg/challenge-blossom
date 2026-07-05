@@ -23,7 +23,7 @@ export type GetCharactersResponse = {
 
 export type GetCharactersVariables = {
   page?: number;
-  filter?: { name: string };
+  filter?: { name?: string; species?: string };
 };
 
 export type GetCharacterResponse = {

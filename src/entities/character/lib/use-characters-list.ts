@@ -13,7 +13,7 @@ function mergeCharacters(existing: Character[], incoming: Character[]) {
   return [...existing, ...newCharacters];
 }
 
-export function useCharactersList(name?: string) {
+export function useCharactersList(name?: string, species?: string) {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [pageInfo, setPageInfo] = useState<CharactersPageInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function useCharactersList(name?: string) {
     isFetchingRef.current = true;
     startLoadingTransition(async () => {
       try {
-        const { info, results } = await fetchCharacters(1, name);
+        const { info, results } = await fetchCharacters(1, name, species);
         setCharacters(results);
         setPageInfo(info);
         setErrorMessage(null);
@@ -42,7 +42,7 @@ export function useCharactersList(name?: string) {
         isFetchingRef.current = false;
       }
     });
-  }, [name]);
+  }, [name, species]);
 
   const loadNextPage = useCallback(() => {
     if (isFetchingRef.current || !pageInfo?.next) return;
@@ -50,7 +50,11 @@ export function useCharactersList(name?: string) {
     isFetchingRef.current = true;
     startLoadingMoreTransition(async () => {
       try {
-        const { info, results } = await fetchCharacters(pageInfo.next!, name);
+        const { info, results } = await fetchCharacters(
+          pageInfo.next!,
+          name,
+          species,
+        );
         setCharacters(previous => mergeCharacters(previous, results));
         setPageInfo(info);
         setLoadMoreErrorMessage(null);
@@ -64,12 +68,12 @@ export function useCharactersList(name?: string) {
         isFetchingRef.current = false;
       }
     });
-  }, [pageInfo, name]);
+  }, [pageInfo, name, species]);
 
   useEffect(() => {
     loadFirstPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name]);
+  }, [name, species]);
 
   return {
     characters,

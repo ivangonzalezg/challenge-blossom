@@ -2,17 +2,18 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ArrowLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { Text, TouchableOpacity, useColorScheme, View } from 'react-native';
-import type { RootStackParamList } from '@/app/navigation/root-navigator';
-import { colors } from '@/shared/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type {
+  CharactersFilter,
+  RootStackParamList,
+  SpecieFilter,
+} from '@/app/navigation/root-navigator';
+import { colors } from '@/shared/ui';
 
 type CharacterFiltersScreenProps = NativeStackScreenProps<
   RootStackParamList,
   'CharacterFilters'
 >;
-
-type CharactersFilter = 'all' | 'starred' | 'others';
-type SpecieFilter = 'all' | 'human' | 'alien';
 
 const CHARACTERS_FILTER_OPTIONS: { label: string; value: CharactersFilter }[] =
   [
@@ -73,7 +74,7 @@ function CharacterFiltersScreen({ navigation }: CharacterFiltersScreenProps) {
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             activeOpacity={0.6}
-            className="absolute -left-3 p-3"
+            className="absolute -left-3 p-3 z-10"
           >
             <ArrowLeft
               color={isDarkMode ? colors.neutral400 : colors.violet700}
@@ -119,7 +120,12 @@ function CharacterFiltersScreen({ navigation }: CharacterFiltersScreenProps) {
 
         <View className="">
           <TouchableOpacity
-            onPress={navigation.goBack}
+            onPress={() =>
+              navigation.navigate('AdvancedSearchResults', {
+                charactersFilter,
+                specieFilter,
+              })
+            }
             activeOpacity={0.6}
             className="py-3 items-center justify-center rounded-lg"
             style={{
