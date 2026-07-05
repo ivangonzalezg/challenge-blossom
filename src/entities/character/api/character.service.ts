@@ -70,13 +70,18 @@ export async function fetchCharacters(
   page = 1,
   name?: string,
   species?: string,
+  status?: string,
+  gender?: string,
 ) {
   const { data } = await withRetryOn429(() =>
     graphqlClient.query<GetCharactersResponse, GetCharactersVariables>({
       query: GET_CHARACTERS,
       variables: {
         page,
-        filter: name || species ? { name, species } : undefined,
+        filter:
+          name || species || status || gender
+            ? { name, species, status, gender }
+            : undefined,
       },
     }),
   );

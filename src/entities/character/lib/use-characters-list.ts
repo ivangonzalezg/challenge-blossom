@@ -13,7 +13,12 @@ function mergeCharacters(existing: Character[], incoming: Character[]) {
   return [...existing, ...newCharacters];
 }
 
-export function useCharactersList(name?: string, species?: string) {
+export function useCharactersList(
+  name?: string,
+  species?: string,
+  status?: string,
+  gender?: string,
+) {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [pageInfo, setPageInfo] = useState<CharactersPageInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -28,7 +33,13 @@ export function useCharactersList(name?: string, species?: string) {
     isFetchingRef.current = true;
     startLoadingTransition(async () => {
       try {
-        const { info, results } = await fetchCharacters(1, name, species);
+        const { info, results } = await fetchCharacters(
+          1,
+          name,
+          species,
+          status,
+          gender,
+        );
         setCharacters(results);
         setPageInfo(info);
         setErrorMessage(null);
@@ -42,7 +53,7 @@ export function useCharactersList(name?: string, species?: string) {
         isFetchingRef.current = false;
       }
     });
-  }, [name, species]);
+  }, [name, species, status, gender]);
 
   const loadNextPage = useCallback(() => {
     if (isFetchingRef.current || !pageInfo?.next) return;
@@ -54,6 +65,8 @@ export function useCharactersList(name?: string, species?: string) {
           pageInfo.next!,
           name,
           species,
+          status,
+          gender,
         );
         setCharacters(previous => mergeCharacters(previous, results));
         setPageInfo(info);
@@ -68,12 +81,12 @@ export function useCharactersList(name?: string, species?: string) {
         isFetchingRef.current = false;
       }
     });
-  }, [pageInfo, name, species]);
+  }, [pageInfo, name, species, status, gender]);
 
   useEffect(() => {
     loadFirstPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, species]);
+  }, [name, species, status, gender]);
 
   return {
     characters,

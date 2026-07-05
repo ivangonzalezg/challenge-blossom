@@ -12,6 +12,8 @@ import CharactersListScreen from '@/screens/characters-list/characters-list.scre
 
 export type CharactersFilter = 'all' | 'starred' | 'others';
 export type SpecieFilter = 'all' | 'human' | 'alien';
+export type StatusFilter = 'all' | 'alive' | 'dead' | 'unknown';
+export type GenderFilter = 'all' | 'female' | 'male' | 'genderless' | 'unknown';
 
 export type RootStackParamList = {
   CharactersList: undefined;
@@ -20,6 +22,8 @@ export type RootStackParamList = {
   AdvancedSearchResults: {
     charactersFilter: CharactersFilter | '';
     specieFilter: SpecieFilter | '';
+    statusFilter: StatusFilter | '';
+    genderFilter: GenderFilter | '';
   };
 };
 

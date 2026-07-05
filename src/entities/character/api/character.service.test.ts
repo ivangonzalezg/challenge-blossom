@@ -116,6 +116,66 @@ describe('fetchCharacters', () => {
     );
   });
 
+  it('passes a status filter variable when a status is provided', async () => {
+    mockedQuery.mockResolvedValueOnce(successResponse);
+
+    await fetchCharacters(1, undefined, undefined, 'Alive');
+
+    expect(mockedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: {
+          page: 1,
+          filter: {
+            name: undefined,
+            species: undefined,
+            status: 'Alive',
+            gender: undefined,
+          },
+        },
+      }),
+    );
+  });
+
+  it('passes a gender filter variable when a gender is provided', async () => {
+    mockedQuery.mockResolvedValueOnce(successResponse);
+
+    await fetchCharacters(1, undefined, undefined, undefined, 'Female');
+
+    expect(mockedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: {
+          page: 1,
+          filter: {
+            name: undefined,
+            species: undefined,
+            status: undefined,
+            gender: 'Female',
+          },
+        },
+      }),
+    );
+  });
+
+  it('passes all filter variables when name, species, status, and gender are all provided', async () => {
+    mockedQuery.mockResolvedValueOnce(successResponse);
+
+    await fetchCharacters(1, 'rick', 'Human', 'Alive', 'Male');
+
+    expect(mockedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: {
+          page: 1,
+          filter: {
+            name: 'rick',
+            species: 'Human',
+            status: 'Alive',
+            gender: 'Male',
+          },
+        },
+      }),
+    );
+  });
+
   it('retries after a 429, waiting for the retry-after header duration', async () => {
     mockedQuery
       .mockRejectedValueOnce(make429Error('3'))

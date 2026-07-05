@@ -35,20 +35,54 @@ const SPECIE_API_VALUES: Record<'human' | 'alien', string> = {
   alien: 'Alien',
 };
 
+const STATUS_API_VALUES: Record<'alive' | 'dead' | 'unknown', string> = {
+  alive: 'Alive',
+  dead: 'Dead',
+  unknown: 'unknown',
+};
+
+const GENDER_API_VALUES: Record<
+  'female' | 'male' | 'genderless' | 'unknown',
+  string
+> = {
+  female: 'Female',
+  male: 'Male',
+  genderless: 'Genderless',
+  unknown: 'unknown',
+};
+
 function AdvancedSearchResultsScreen({
   route,
   navigation,
 }: AdvancedSearchResultsScreenProps) {
-  const { charactersFilter, specieFilter } = route.params;
+  const { charactersFilter, specieFilter, statusFilter, genderFilter } =
+    route.params;
   const isDarkMode = useColorScheme() === 'dark';
 
   const activeFilterCount =
     (charactersFilter !== '' && charactersFilter !== 'all' ? 1 : 0) +
-    (specieFilter !== '' && specieFilter !== 'all' ? 1 : 0);
+    (specieFilter !== '' && specieFilter !== 'all' ? 1 : 0) +
+    (statusFilter !== '' && statusFilter !== 'all' ? 1 : 0) +
+    (genderFilter !== '' && genderFilter !== 'all' ? 1 : 0);
 
   const speciesQueryValue =
     specieFilter === 'human' || specieFilter === 'alien'
       ? SPECIE_API_VALUES[specieFilter]
+      : undefined;
+
+  const statusQueryValue =
+    statusFilter === 'alive' ||
+    statusFilter === 'dead' ||
+    statusFilter === 'unknown'
+      ? STATUS_API_VALUES[statusFilter]
+      : undefined;
+
+  const genderQueryValue =
+    genderFilter === 'female' ||
+    genderFilter === 'male' ||
+    genderFilter === 'genderless' ||
+    genderFilter === 'unknown'
+      ? GENDER_API_VALUES[genderFilter]
       : undefined;
 
   const {
@@ -59,25 +93,38 @@ function AdvancedSearchResultsScreen({
     errorMessage,
     loadMoreErrorMessage,
     loadNextPage,
-  } = useCharactersList(undefined, speciesQueryValue);
+  } = useCharactersList(
+    undefined,
+    speciesQueryValue,
+    statusQueryValue,
+    genderQueryValue,
+  );
   const { favoriteCharacters, favoriteIds, toggleFavorite } =
     useFavoriteCharacters();
 
   const nonFavoriteCharacters = characters.filter(
     character => !favoriteIds.has(character.id),
   );
-  const starredCharacters = speciesQueryValue
-    ? favoriteCharacters.filter(
-        character => character.species === speciesQueryValue,
-      )
-    : favoriteCharacters;
+  const starredCharacters = favoriteCharacters.filter(character => {
+    if (speciesQueryValue && character.species !== speciesQueryValue) {
+      return false;
+    }
+    if (statusQueryValue && character.status !== statusQueryValue) {
+      return false;
+    }
+    if (genderQueryValue && character.gender !== genderQueryValue) {
+      return false;
+    }
+    return true;
+  });
 
   const showStarredSection = charactersFilter !== 'others';
   const showCharactersSection = charactersFilter !== 'starred';
 
-  const charactersSectionCount = speciesQueryValue
-    ? nonFavoriteCharacters.length
-    : Math.max(0, totalCount - favoriteIds.size);
+  const charactersSectionCount = Math.max(
+    0,
+    totalCount - starredCharacters.length,
+  );
 
   const resultsCount =
     (showStarredSection ? starredCharacters.length : 0) +

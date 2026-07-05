@@ -5,8 +5,10 @@ import { Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type {
   CharactersFilter,
+  GenderFilter,
   RootStackParamList,
   SpecieFilter,
+  StatusFilter,
 } from '@/app/navigation/root-navigator';
 import { colors } from '@/shared/ui';
 
@@ -28,18 +30,41 @@ const SPECIE_FILTER_OPTIONS: { label: string; value: SpecieFilter }[] = [
   { label: 'Alien', value: 'alien' },
 ];
 
+const STATUS_FILTER_OPTIONS: { label: string; value: StatusFilter }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Alive', value: 'alive' },
+  { label: 'Dead', value: 'dead' },
+  { label: 'Unknown', value: 'unknown' },
+];
+
+const GENDER_FILTER_OPTIONS: { label: string; value: GenderFilter }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Female', value: 'female' },
+  { label: 'Male', value: 'male' },
+  { label: 'Genderless', value: 'genderless' },
+  { label: 'Unknown', value: 'unknown' },
+];
+
 type FilterPillProps = {
   label: string;
   isSelected: boolean;
   onPress: () => void;
+  fill?: boolean;
 };
 
-function FilterPill({ label, isSelected, onPress }: FilterPillProps) {
+function FilterPill({
+  label,
+  isSelected,
+  onPress,
+  fill = true,
+}: FilterPillProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.6}
-      className={`py-3 flex-1 items-center justify-center rounded-lg ${
+      className={`py-3 items-center justify-center rounded-lg ${
+        fill ? 'flex-1' : 'px-4'
+      } ${
         isSelected
           ? ''
           : 'border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900'
@@ -58,14 +83,57 @@ function FilterPill({ label, isSelected, onPress }: FilterPillProps) {
   );
 }
 
+type FilterSectionProps<T extends string> = {
+  title: string;
+  options: { label: string; value: T }[];
+  selectedValue: T | '';
+  onSelect: (value: T) => void;
+  wrap?: boolean;
+  isFirst?: boolean;
+};
+
+function FilterSection<T extends string>({
+  title,
+  options,
+  selectedValue,
+  onSelect,
+  wrap = false,
+  isFirst = false,
+}: FilterSectionProps<T>) {
+  return (
+    <View className={`gap-2 ${isFirst ? 'pt-4' : 'pt-6'}`}>
+      <Text className="text-gray-500 dark:text-neutral-400">{title}</Text>
+      <View
+        className={`flex-row gap-3 ${wrap ? 'flex-wrap justify-between' : ''}`}
+      >
+        {options.map(option => (
+          <FilterPill
+            key={option.value}
+            label={option.label}
+            isSelected={selectedValue === option.value}
+            onPress={() => onSelect(option.value)}
+            fill={!wrap}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function CharacterFiltersScreen({ navigation }: CharacterFiltersScreenProps) {
   const isDarkMode = useColorScheme() === 'dark';
   const [charactersFilter, setCharactersFilter] = useState<
     CharactersFilter | ''
   >('');
   const [specieFilter, setSpecieFilter] = useState<SpecieFilter | ''>('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter | ''>('');
+  const [genderFilter, setGenderFilter] = useState<GenderFilter | ''>('');
 
-  const isFilterActive = charactersFilter !== '' || specieFilter !== '';
+  const isFilterActive =
+    charactersFilter !== '' ||
+    specieFilter !== '' ||
+    statusFilter !== '' ||
+    genderFilter !== '';
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
@@ -86,35 +154,35 @@ function CharacterFiltersScreen({ navigation }: CharacterFiltersScreenProps) {
           </Text>
         </View>
 
-        <View className="gap-2 pt-4">
-          <Text className="text-gray-500 dark:text-neutral-400">
-            Characters
-          </Text>
-          <View className="flex-row gap-3">
-            {CHARACTERS_FILTER_OPTIONS.map(option => (
-              <FilterPill
-                key={option.value}
-                label={option.label}
-                isSelected={charactersFilter === option.value}
-                onPress={() => setCharactersFilter(option.value)}
-              />
-            ))}
-          </View>
-        </View>
+        <FilterSection
+          title="Characters"
+          options={CHARACTERS_FILTER_OPTIONS}
+          selectedValue={charactersFilter}
+          onSelect={setCharactersFilter}
+          isFirst
+        />
 
-        <View className="gap-2 pt-6">
-          <Text className="text-gray-500 dark:text-neutral-400">Specie</Text>
-          <View className="flex-row gap-3">
-            {SPECIE_FILTER_OPTIONS.map(option => (
-              <FilterPill
-                key={option.value}
-                label={option.label}
-                isSelected={specieFilter === option.value}
-                onPress={() => setSpecieFilter(option.value)}
-              />
-            ))}
-          </View>
-        </View>
+        <FilterSection
+          title="Specie"
+          options={SPECIE_FILTER_OPTIONS}
+          selectedValue={specieFilter}
+          onSelect={setSpecieFilter}
+        />
+
+        <FilterSection
+          title="Status"
+          options={STATUS_FILTER_OPTIONS}
+          selectedValue={statusFilter}
+          onSelect={setStatusFilter}
+        />
+
+        <FilterSection
+          title="Gender"
+          options={GENDER_FILTER_OPTIONS}
+          selectedValue={genderFilter}
+          onSelect={setGenderFilter}
+          wrap
+        />
 
         <View className="flex-1" />
 
@@ -124,6 +192,8 @@ function CharacterFiltersScreen({ navigation }: CharacterFiltersScreenProps) {
               navigation.navigate('AdvancedSearchResults', {
                 charactersFilter,
                 specieFilter,
+                statusFilter,
+                genderFilter,
               })
             }
             activeOpacity={0.6}
