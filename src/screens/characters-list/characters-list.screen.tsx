@@ -6,6 +6,7 @@ import {
   SectionList,
   Text,
   TextInput,
+  TouchableOpacity,
   useColorScheme,
   View,
 } from 'react-native';
@@ -125,10 +126,15 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
             value={searchText}
             onChangeText={setSearchText}
           />
-          <SlidersVertical
-            color={isDarkMode ? colors.violet400 : colors.violet600}
-            size={20}
-          />
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CharacterFilters')}
+            activeOpacity={0.6}
+          >
+            <SlidersVertical
+              color={isDarkMode ? colors.violet400 : colors.violet600}
+              size={20}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 

@@ -2,9 +2,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ArrowLeft, Heart } from 'lucide-react-native';
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
   Text,
+  TouchableOpacity,
   useColorScheme,
   View,
 } from 'react-native';
@@ -33,12 +33,16 @@ function CharacterDetailScreen({
       contentContainerClassName="px-6 flex-1"
     >
       <View className="flex justify-center relative h-16">
-        <Pressable onPress={navigation.goBack} className="absolute p-3 -left-3">
+        <TouchableOpacity
+          onPress={navigation.goBack}
+          activeOpacity={0.6}
+          className="absolute p-3 -left-3"
+        >
           <ArrowLeft
             color={isDarkMode ? colors.neutral400 : colors.gray900}
             size={24}
           />
-        </Pressable>
+        </TouchableOpacity>
       </View>
 
       {isLoading ? (
