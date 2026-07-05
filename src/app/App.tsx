@@ -37,7 +37,7 @@ function AppContent() {
           className="flex-1"
           behavior={Platform.select({
             ios: 'padding',
-            android: 'height',
+            android: 'padding',
           })}
         >
           <RootNavigator />
