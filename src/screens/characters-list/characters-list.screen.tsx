@@ -1,8 +1,33 @@
 import { Heart } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { Text, TextInput, useColorScheme, View } from 'react-native';
+import { fetchCharacters } from '@/entities/character';
 
 function CharactersListScreen() {
   const isDarkMode = useColorScheme() === 'dark';
+  const [debugStatus, setDebugStatus] = useState('Loading characters...');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchCharacters(1)
+      .then(({ results }) => {
+        if (!isMounted) return;
+        setDebugStatus(`Loaded ${results.length} characters`);
+      })
+      .catch((error: unknown) => {
+        if (!isMounted) return;
+        console.error(
+          '[characters] failed to fetch characters from Rick and Morty GraphQL API:',
+          error,
+        );
+        setDebugStatus('Failed to load characters (see console)');
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-950">
@@ -15,6 +40,9 @@ function CharactersListScreen() {
         placeholder="Search characters"
         placeholderTextColor={isDarkMode ? '#a3a3a3' : '#737373'}
       />
+      <Text className="mt-4 text-xs text-neutral-500 dark:text-neutral-400">
+        {debugStatus}
+      </Text>
     </View>
   );
 }
