@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Search, SlidersVertical } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   SectionList,
@@ -13,16 +14,50 @@ import {
   CharacterListItem,
   useCharactersList,
   useFavoriteCharacters,
+  type Character,
 } from '@/entities/character';
 import { colors } from '@/shared/ui';
+
+const SEARCH_DEBOUNCE_MS = 400;
+
+const STARRED_SECTION_TITLE = 'Starred Characters';
+const CHARACTERS_SECTION_TITLE = 'Characters';
 
 type CharactersListScreenProps = NativeStackScreenProps<
   RootStackParamList,
   'CharactersList'
 >;
 
+function SectionFooterMessage({ children }: { children: string }) {
+  return (
+    <Text className="pb-4 text-center text-gray-500 dark:text-neutral-400">
+      {children}
+    </Text>
+  );
+}
+
+function SectionFooterSpinner() {
+  return (
+    <View className="py-4">
+      <ActivityIndicator />
+    </View>
+  );
+}
+
 function CharactersListScreen({ navigation }: CharactersListScreenProps) {
   const isDarkMode = useColorScheme() === 'dark';
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearchText, setDebouncedSearchText] = useState('');
+  const isSearching = searchText.length > 0;
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchText(searchText);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchText]);
+
   const {
     characters,
     totalCount,
@@ -31,12 +66,42 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
     errorMessage,
     loadMoreErrorMessage,
     loadNextPage,
-  } = useCharactersList();
+  } = useCharactersList(debouncedSearchText || undefined);
   const { favoriteCharacters, favoriteIds, toggleFavorite } =
     useFavoriteCharacters();
+
   const nonFavoriteCharacters = characters.filter(
     character => !favoriteIds.has(character.id),
   );
+  const starredCharacters = isSearching
+    ? favoriteCharacters.filter(character =>
+        character.name.toLowerCase().includes(searchText.toLowerCase()),
+      )
+    : favoriteCharacters;
+
+  const isInitialLoad = isLoading && characters.length === 0 && !isSearching;
+  const isSearchLoading = isLoading && isSearching;
+
+  const charactersCount = isSearching
+    ? nonFavoriteCharacters.length
+    : Math.max(0, totalCount - favoriteIds.size);
+
+  function renderStarredFooter() {
+    if (starredCharacters.length > 0) return null;
+    return (
+      <SectionFooterMessage>
+        {isSearching ? 'No matches' : 'No favorites yet'}
+      </SectionFooterMessage>
+    );
+  }
+
+  function renderCharactersFooter() {
+    if (isSearchLoading) return <SectionFooterSpinner />;
+    if (isSearching && nonFavoriteCharacters.length === 0) {
+      return <SectionFooterMessage>No matches</SectionFooterMessage>;
+    }
+    return null;
+  }
 
   return (
     <View className="flex-1 bg-white dark:bg-neutral-950 px-6">
@@ -57,7 +122,8 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
             placeholderTextColor={
               isDarkMode ? colors.neutral400 : colors.gray500
             }
-            editable={false}
+            value={searchText}
+            onChangeText={setSearchText}
           />
           <SlidersVertical
             color={isDarkMode ? colors.violet400 : colors.violet600}
@@ -66,7 +132,7 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
         </View>
       </View>
 
-      {isLoading ? (
+      {isInitialLoad ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator />
         </View>
@@ -79,11 +145,14 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
       ) : (
         <SectionList
           sections={[
-            { title: 'Starred Characters', data: favoriteCharacters },
-            { title: 'Characters', data: nonFavoriteCharacters },
+            { title: STARRED_SECTION_TITLE, data: starredCharacters },
+            {
+              title: CHARACTERS_SECTION_TITLE,
+              data: isSearchLoading ? [] : nonFavoriteCharacters,
+            },
           ]}
           keyExtractor={character => character.id}
-          renderItem={({ item }) => (
+          renderItem={({ item }: { item: Character }) => (
             <CharacterListItem
               character={item}
               isFavorite={favoriteIds.has(item.id)}
@@ -95,34 +164,29 @@ function CharactersListScreen({ navigation }: CharactersListScreenProps) {
               onFavoritePress={() => toggleFavorite(item)}
             />
           )}
-          onEndReached={loadNextPage}
+          onEndReached={isSearchLoading ? undefined : loadNextPage}
           onEndReachedThreshold={0.5}
           renderSectionHeader={({ section }) => (
             <Text className="bg-white py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-neutral-950 dark:text-neutral-400">
               {section.title} (
-              {section.title === 'Starred Characters'
-                ? favoriteCharacters.length
-                : totalCount - favoriteIds.size}
+              {section.title === STARRED_SECTION_TITLE
+                ? starredCharacters.length
+                : charactersCount}
               )
             </Text>
           )}
           renderSectionFooter={({ section }) =>
-            section.title === 'Starred Characters' &&
-            favoriteCharacters.length === 0 ? (
-              <Text className="pb-4 text-center text-gray-500 dark:text-neutral-400">
-                No favorites yet
-              </Text>
-            ) : null
+            section.title === STARRED_SECTION_TITLE
+              ? renderStarredFooter()
+              : renderCharactersFooter()
           }
           ListFooterComponent={
-            isLoadingMore ? (
-              <View className="py-4">
-                <ActivityIndicator />
-              </View>
+            isLoadingMore && !isSearchLoading ? (
+              <SectionFooterSpinner />
             ) : loadMoreErrorMessage ? (
-              <Text className="py-4 text-center text-gray-500 dark:text-neutral-400">
+              <SectionFooterMessage>
                 {loadMoreErrorMessage}
-              </Text>
+              </SectionFooterMessage>
             ) : null
           }
         />

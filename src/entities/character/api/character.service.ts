@@ -66,11 +66,11 @@ async function withRetryOn429<T>(operation: () => Promise<T>): Promise<T> {
   throw lastError;
 }
 
-export async function fetchCharacters(page = 1) {
+export async function fetchCharacters(page = 1, name?: string) {
   const { data } = await withRetryOn429(() =>
     graphqlClient.query<GetCharactersResponse, GetCharactersVariables>({
       query: GET_CHARACTERS,
-      variables: { page },
+      variables: { page, filter: name ? { name } : undefined },
     }),
   );
 

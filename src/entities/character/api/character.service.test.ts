@@ -68,6 +68,30 @@ describe('fetchCharacters', () => {
     expect(mockedQuery).toHaveBeenCalledTimes(1);
   });
 
+  it('passes a name filter variable when a name is provided', async () => {
+    mockedQuery.mockResolvedValueOnce(successResponse);
+
+    await fetchCharacters(1, 'rick');
+
+    expect(mockedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: { page: 1, filter: { name: 'rick' } },
+      }),
+    );
+  });
+
+  it('omits the filter variable when no name is provided', async () => {
+    mockedQuery.mockResolvedValueOnce(successResponse);
+
+    await fetchCharacters(1);
+
+    expect(mockedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: { page: 1, filter: undefined },
+      }),
+    );
+  });
+
   it('retries after a 429, waiting for the retry-after header duration', async () => {
     mockedQuery
       .mockRejectedValueOnce(make429Error('3'))
