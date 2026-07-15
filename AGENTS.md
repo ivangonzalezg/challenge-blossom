@@ -4,8 +4,16 @@
 
 - **Framework**: React Native CLI (0.86), TypeScript
 - **Navigation**: React Navigation (`@react-navigation/native` + `@react-navigation/native-stack`)
+- **Data fetching**: Apollo Client + GraphQL, against the Rick and Morty GraphQL API
+  (`src/shared/api/graphql-client.ts`)
+- **Local persistence**: SQLite via `react-native-nitro-sqlite`
+  (`src/shared/api/sqlite-client.ts`)
+- **Styling**: NativeWind (Tailwind classes via `className`)
+- **Icons**: `lucide-react-native`
+- **Animation**: `react-native-reanimated` + `react-native-worklets`; splash screen via
+  `react-native-bootsplash`
+- **Testing**: Jest + `@testing-library/react-native`
 - **Package Manager**: Yarn
-- **Backend**: External API (not Supabase). A dedicated gateway/client layer will be designed later under `src/shared/api` once the API contract is defined.
 
 ## Project Structure
 
@@ -13,94 +21,116 @@ This project is not a monorepo — a single React Native app at the repo root.
 
 ```
 /src
-  /app        # App-wide setup: providers, root navigation container, global config
-  /pages      # Page compositions (FSD "pages" layer)
+  /app        # App-wide setup: providers, root navigation container, splash screen
+  /screens    # Screen compositions (FSD "pages" layer)
   /widgets    # Large self-contained UI blocks
   /features   # User interactions and business logic
-  /entities   # Business entities
-  /shared     # Reusable utilities, UI kit, api client (once defined)
+  /entities   # Business entities (e.g. character)
+  /shared     # Reusable utilities, UI kit, api client
 /android      # Native Android project
 /ios          # Native iOS project
 /docs         # Specs and plans (superpowers workflow)
 ```
 
-Each layer folder currently contains only a `.gitkeep` placeholder — there are no slices
-yet. Do not add a layer-root `index.ts`: Steiger's `fsd/no-layer-public-api` rule rejects
-it, since in FSD the public API (`index.ts`) belongs at the _slice_ level (e.g.
-`entities/user/index.ts`), not the layer root. Remove a layer's `.gitkeep` once it gains
-its first real slice.
+`widgets` and `features` layers are still placeholders (`.gitkeep` only). Remove a layer's
+`.gitkeep` once it gains its first real slice.
 
-## Frontend: Feature Sliced Design (FSD)
+## Architecture: Feature-Sliced Design (FSD)
 
-Layers (top to bottom, can only import from layers below):
+Layers (top to bottom, each may only import from layers below it):
 
-1. **app** - Application initialization, providers, root navigation container
-2. **pages** - Page compositions (FSD calls this layer "pages", not "screens" — this
-   project follows the standard FSD naming; only Next.js App Router projects rename it
-   to "screens" to avoid clashing with routing conventions)
-3. **widgets** - Complex UI blocks combining features/entities
-4. **features** - User scenarios and interactions
-5. **entities** - Business domain models and their UI
-6. **shared** - Infrastructure, UI kit, utilities (no business logic)
+1. **app** — providers, root navigation container
+2. **screens** — screen compositions (FSD "pages" layer)
+3. **widgets** — complex UI blocks combining features/entities
+4. **features** — user scenarios and interactions
+5. **entities** — business domain models and their UI (e.g. `entities/character`)
+6. **shared** — infrastructure, UI kit, api clients, utilities (no business logic)
 
-Each layer contains slices (domain folders) as the app grows. Slices have segments such as
-`ui/`, `model/`, `api/`, `lib/` — created as needed, not scaffolded in advance.
+Slices expose a public API via `index.ts` (see `src/entities/character/index.ts`) and use
+segments like `ui/`, `model/`, `api/`, `lib/` as needed. Run `yarn steiger` to check layer
+boundaries (config: `steiger.config.ts`).
 
-Import rule: a layer may only import from layers below it in the list above. Steiger
-(`steiger.config.ts`, using `@feature-sliced/steiger-plugin`'s `recommended` preset)
-enforces this — run `yarn steiger` to check.
+## Where Things Go
 
-## Documentation Policy (deviates from distributed-AGENTS.md pattern)
-
-**This project uses a single, centralized `AGENTS.md` at the repo root.** Unlike
-distributed-documentation setups where every layer/slice gets its own `AGENTS.md`, do
-**not** create per-layer or per-slice `AGENTS.md` files here. All structural and
-development conventions live in this one file. Keep it updated as the project grows
-instead of splitting it up.
+- **GraphQL queries and API calls**: `entities/<slice>/api/` (e.g.
+  `character.queries.ts`, `character.service.ts`). The Apollo client itself lives in
+  `shared/api/graphql-client.ts` — don't instantiate another client elsewhere.
+- **SQLite logic**: `entities/<slice>/api/*.service.ts` (see `favorite.service.ts`,
+  `hidden.service.ts`, `comment.service.ts`). All queries go through `sqliteClient` from
+  `shared/api` — don't open a second database connection.
+  Table schema/migrations live in `shared/api/sqlite-client.ts`.
+- **Cross-cutting state** (favorites, hidden characters): React context + hooks in
+  `entities/<slice>/lib/` (e.g. `favorites-context.tsx`, `hidden-context.tsx`). Reuse
+  these providers/hooks instead of adding new global state.
+- **Shared UI primitives**: `shared/ui/`, re-exported from `shared/ui/index.ts` (e.g.
+  `AvatarImage`, `BottomSheetModal`, `ErrorMessage`, `SectionHeader`). Reuse these before
+  building new one-off components.
+- **Navigation routes**: `app/navigation/root-navigator.tsx`. Add new stack screens here
+  and extend `RootStackParamList`.
 
 ## Language Conventions
 
-- Both UI copy and code (variable names, function names, types, file names, comments) are
-  in **English**. This project does not follow the Spanish-UI-copy convention used by some
-  sibling projects.
+- UI copy and code (variable names, function names, types, file names, comments) are in
+  English.
 
 ## Path Alias
 
-- Use `@/` to import from `src` (e.g., `import { Button } from '@/shared/ui/button'`)
-  instead of deep relative paths (`../../../shared/ui/button`).
-- Configured in `babel.config.js` (via `babel-plugin-module-resolver`) and `tsconfig.json`
-  (`compilerOptions.paths`). Keep both in sync if the alias ever changes.
+- Use `@/` to import from `src` (e.g. `import { colors } from '@/shared/ui'`) instead of
+  deep relative paths. Configured in `babel.config.js` (`babel-plugin-module-resolver`) and
+  `tsconfig.json` (`compilerOptions.paths`) — keep both in sync if it ever changes.
+
+## Styling
+
+- Use NativeWind (`className="..."`) for styling. `StyleSheet.create` is acceptable only
+  where NativeWind can't express the need (e.g. `Animated`/worklet styles in the splash
+  screen) — it's not the default approach.
+- Support light/dark mode: use Tailwind `dark:` variants for `className`, and
+  `useColorScheme()` + `shared/ui/colors.ts` where a raw color value is needed (e.g.
+  `underlayColor`).
+
+## Testing
+
+- Co-locate tests next to the code they cover (e.g. `favorite.service.test.ts` next to
+  `favorite.service.ts`).
+- Mock `sqliteClient`/network boundaries rather than hitting real SQLite or the GraphQL
+  API in unit tests (see `favorite.service.test.ts` for the pattern).
+- Add or update tests whenever you change service/hook behavior.
 
 ## Quality Tooling
 
-Run these before considering any change under `src/` complete:
+Run before considering any change under `src/` complete:
 
 - `yarn lint` — ESLint (`@react-native/eslint-config`)
 - `yarn typecheck` — TypeScript, no emit
+- `yarn test` — Jest unit tests
 - `yarn format` — Prettier check (`yarn format:write` to auto-fix); `.prettierignore`
   excludes `ios/`, `android/`, `vendor/`, `node_modules/`, and `docs/`
-- `yarn steiger` — FSD architecture/layer-boundary linting
-- `yarn validate` — runs all four in sequence; treat this as the required
-  pre-completion check, equivalent to `validate:next` in sibling Next.js projects
+- `yarn steiger` — FSD layer-boundary linting
+- `yarn validate` — runs lint, typecheck, format, and steiger in sequence; treat this as
+  the required pre-completion check
 
-## Deferred / Not Yet Decided
+Other useful commands: `yarn install`, `npx pod-install` (iOS), `yarn start`, `yarn android`,
+`yarn ios`.
 
-These areas are intentionally unset — do not assume a default or invent one without
-checking with the user first:
+## Coding Rules
 
-- **Styling solution**: `tailwind.config.js` and `nativewind-env.d.ts` exist as unused
-  placeholders. NativeWind vs. plain `StyleSheet` has not been decided.
-- **API/data layer**: This app calls an external API (not Supabase). No HTTP client,
-  gateway abstraction, or data-fetching library (e.g., React Query) has been chosen yet.
-- **Navigation content**: `@react-navigation/native` + `native-stack` are installed, but no
-  actual navigator, stack, or screens have been wired up yet — `src/app` and `src/pages`
-  are currently empty placeholders.
+- Type everything explicitly at module boundaries (exported functions, hooks, component
+  props); avoid `any`.
+- Reuse existing services, hooks, and UI primitives before writing new ones.
+- Keep business logic out of screen/UI components — put it in `entities`/`features`
+  hooks and services.
+- Don't bypass `shared/api` clients (Apollo, SQLite) by creating new connections.
+- Don't introduce a new state management library — React context (see
+  `favorites-context.tsx`, `hidden-context.tsx`) is the established pattern here.
+
+## Documentation Policy
+
+This project uses a single, centralized `AGENTS.md` at the repo root. Do not create
+per-layer or per-slice `AGENTS.md` files — keep all conventions here and update this file
+as the project grows.
 
 ## How to Keep AGENTS.md Updated
 
-- When a new layer gains its first real slice, document the slice's purpose here rather
-  than creating a new `AGENTS.md` file for it.
-- When a deferred decision above gets made (styling, API layer, etc.), replace its bullet
-  with the actual decision and remove it from "Deferred / Not Yet Decided".
+- When a new layer gains its first real slice, document the slice's purpose here.
 - After any change under `src/`, run `yarn validate` to keep formatting/TS/ESLint/FSD
   structure clean.
